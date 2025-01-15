@@ -1,10 +1,10 @@
 const presence = new Presence({
-		clientId: "684410680392286247"
+		clientId: "684410680392286247",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		search: "presence.activity.searching"
+		play: "general.playing",
+		pause: "general.paused",
+		search: "general.searching",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
@@ -30,7 +30,8 @@ presence.on(
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "topflix"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/T/TopFlix/assets/logo.png",
 	};
 
 	let title;
@@ -41,8 +42,10 @@ presence.on("UpdateData", async () => {
 		title = document.querySelector(".bd-hd");
 
 		if (title) {
-			const year = document.querySelector(".bd-hd > span");
-			title = title.textContent.replace(year.textContent, "");
+			title = title.textContent.replace(
+				document.querySelector(".bd-hd > span").textContent,
+				""
+			);
 
 			const season = document.querySelector(".accordion > li.open > div");
 
@@ -57,16 +60,15 @@ presence.on("UpdateData", async () => {
 					presenceData.state = season.textContent;
 
 					if (iFrameVideo === true && !isNaN(duration)) {
-						const [startTimestamp, endTimestamp] = presence.getTimestamps(
-							Math.floor(currentTime),
-							Math.floor(duration)
-						);
-						presenceData.startTimestamp = startTimestamp;
-						presenceData.endTimestamp = endTimestamp;
-						presenceData.smallImageKey = "play";
+						[presenceData.startTimestamp, presenceData.endTimestamp] =
+							presence.getTimestamps(
+								Math.floor(currentTime),
+								Math.floor(duration)
+							);
+						presenceData.smallImageKey = Assets.Play;
 						presenceData.smallImageText = (await strings).play;
 					} else {
-						presenceData.smallImageKey = "pause";
+						presenceData.smallImageKey = Assets.Pause;
 						presenceData.smallImageText = (await strings).pause;
 					}
 				} else {
@@ -94,16 +96,15 @@ presence.on("UpdateData", async () => {
 				presenceData.state = `${year.textContent} - ${rating}`;
 
 				if (iFrameVideo === true && !isNaN(duration)) {
-					const [startTimestamp, endTimestamp] = presence.getTimestamps(
-						Math.floor(currentTime),
-						Math.floor(duration)
-					);
-					presenceData.startTimestamp = startTimestamp;
-					presenceData.endTimestamp = endTimestamp;
-					presenceData.smallImageKey = "play";
+					[presenceData.startTimestamp, presenceData.endTimestamp] =
+						presence.getTimestamps(
+							Math.floor(currentTime),
+							Math.floor(duration)
+						);
+					presenceData.smallImageKey = Assets.Play;
 					presenceData.smallImageText = (await strings).play;
 				} else {
-					presenceData.smallImageKey = "pause";
+					presenceData.smallImageKey = Assets.Pause;
 					presenceData.smallImageText = (await strings).pause;
 				}
 			} else {

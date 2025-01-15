@@ -1,14 +1,16 @@
 const presence = new Presence({
-		clientId: "651135297756856339"
+		clientId: "651135297756856339",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
+
 let title;
 const actionURL = new URL(document.location.href),
 	title2URL = new URL(document.location.href);
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "logo"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/T/Touhou%20Wiki/assets/logo.png",
 	};
 
 	title = document.querySelector("h1#firstHeading");
@@ -33,7 +35,7 @@ presence.on("UpdateData", async () => {
 	) {
 		presenceData.details = "Viewing revision history of:";
 		if (title2Result.includes("_"))
-			presenceData.state = title2Result.replace(/_/g, " ");
+			presenceData.state = title2Result.replaceAll("_", " ");
 		else presenceData.state = title2Result;
 
 		presenceData.startTimestamp = browsingTimestamp;
@@ -44,7 +46,7 @@ presence.on("UpdateData", async () => {
 	) {
 		presenceData.details = "Editing a page:";
 		if (title2Result.includes("_"))
-			presenceData.state = title2Result.replace(/_/g, " ");
+			presenceData.state = title2Result.replaceAll("_", " ");
 		else presenceData.state = title2Result;
 
 		presenceData.startTimestamp = browsingTimestamp;

@@ -1,12 +1,12 @@
 const presence = new Presence({
-	clientId: "726570008037163100"
+	clientId: "726570008037163100",
 });
 
 function pathStarts(string: string): boolean {
 	return document.location.pathname.startsWith(string);
 }
 function isHome(string: string): boolean {
-	if (string === "/") if (document.location.pathname === "/") return true;
+	if (string === "/" && document.location.pathname === "/") return true;
 
 	return false;
 }
@@ -24,8 +24,9 @@ function getGuildTitle(): string {
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "aminoapps",
-		startTimestamp: new Date().getTime()
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/A/AminoApps/assets/logo.png",
+		startTimestamp: Date.now(),
 	};
 	if (document.location.hostname === "aminoapps.com") {
 		switch (true) {
@@ -44,7 +45,7 @@ presence.on("UpdateData", async () => {
 				presenceData.state = document.querySelector(
 					"body > section > section > section > div > article.post.main-post.hide-blocker > header > h1"
 				).textContent;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 				presenceData.smallImageText = "Reading";
 				break;
 			}
@@ -57,7 +58,7 @@ presence.on("UpdateData", async () => {
 				presenceData.state = document.querySelector(
 					"body > section > section > section > div > section > section > div > a:nth-child(2)"
 				).textContent;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 				presenceData.smallImageText = "Reading";
 				break;
 			}

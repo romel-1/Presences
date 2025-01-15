@@ -1,15 +1,19 @@
 const presence = new Presence({
-	clientId: "924791712944099389"
+	clientId: "924791712944099389",
 });
+
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/A/Animes%20Portal/assets/logo.png",
+}
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "logo"
+			largeImageKey: Assets.Logo,
 		},
-		{ pathname } = document.location,
+		{ pathname, href } = document.location,
 		[showThumb, showMessaging] = await Promise.all([
 			presence.getSetting<boolean>("showthumb"),
-			presence.getSetting<boolean>("showmessaging")
+			presence.getSetting<boolean>("showmessaging"),
 		]),
 		paths: string[] = pathname.split("/");
 	if (!paths[0]) paths.shift();
@@ -19,16 +23,15 @@ presence.on("UpdateData", async () => {
 		if (!paths[1]) presenceData.details = "Viewing messages";
 		else if (paths[1].startsWith("pm-") && showMessaging) {
 			const body = document.querySelector<HTMLDivElement>(
-					"body > main.animated > div.wrapper > div.dialogPadding"
-				),
-				username =
-					body.querySelector<HTMLSpanElement>("span.username").textContent;
-
+				"body > main.animated > div.wrapper > div.dialogPadding"
+			);
 			presenceData.smallImageKey = parseAvatarFromAttr(
 				body.querySelector("a.avatar").getAttribute("style")
 			);
 
-			presenceData.details = `Messaging ${username}`;
+			presenceData.details = `Messaging ${
+				body.querySelector<HTMLSpanElement>("span.username").textContent
+			}`;
 		} else if (paths[1].startsWith("pm-") && showMessaging === false)
 			presenceData.details = "Viewing messages";
 	} else if (pathname === "/chat")
@@ -51,7 +54,7 @@ presence.on("UpdateData", async () => {
 			);
 
 			presenceData.details = `Viewing otaku ${username}`;
-			presenceData.smallImageKey = "logo";
+			presenceData.smallImageKey = Assets.Logo;
 		}
 	} else if (pathname.startsWith("/animes")) {
 		if (paths[1] === "search" && paths[2]) {
@@ -75,15 +78,15 @@ presence.on("UpdateData", async () => {
 					"body > main.animated > div.wrapper > article.rowView > aside.aside > div.cover-holder > img.abs"
 				).src;
 
-			if (image) presenceData.smallImageKey = "logo";
+			if (image) presenceData.smallImageKey = Assets.Logo;
 
 			presenceData.details = `Viewing ${name}`;
-			presenceData.largeImageKey = image ?? "logo";
+			presenceData.largeImageKey = image ?? Assets.Logo;
 			presenceData.buttons = [
 				{
 					label: "View anime",
-					url: document.location.href
-				}
+					url: href,
+				},
 			];
 		} else if (uid && eid) {
 			const { name, episode, part } = getInfo(),
@@ -98,15 +101,15 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "Watch anime",
-						url: document.location.href
-					}
+						url: href,
+					},
 				];
 
 				if (part) presenceData.state = presenceData.state += ` (part ${part})`;
 
 				if (thumb !== "logo" && showThumb) {
 					presenceData.largeImageKey = thumb;
-					presenceData.smallImageKey = "logo";
+					presenceData.smallImageKey = Assets.Logo;
 				}
 			}
 		}
@@ -129,11 +132,11 @@ presence.on("UpdateData", async () => {
 				"body > main.animated > div.wrapper > article.rowView > aside.aside > div.cover-holder > img.abs"
 			).src;
 
-		if (image) presenceData.smallImageKey = "logo";
+		if (image) presenceData.smallImageKey = Assets.Logo;
 
 		presenceData.details = "Viewing movie";
 		presenceData.state = name;
-		presenceData.largeImageKey = image ?? "logo";
+		presenceData.largeImageKey = image ?? Assets.Logo;
 	} else if (pathname.startsWith("/manga")) {
 		if (paths[1] === "search" && paths[2]) {
 			const query: string = paths[2].replaceAll("-", " ");
@@ -149,12 +152,11 @@ presence.on("UpdateData", async () => {
 				const list = document.querySelectorAll<HTMLSpanElement>(
 						"body > main.animated > ul#path > li > a > span"
 					),
-					name = list[1].textContent,
 					page = document.querySelector<HTMLParagraphElement>(
 						"body > main.animated > div.wrapper > div.heading > b#num"
 					).textContent;
 
-				presenceData.details = `Reading manga ${name}`;
+				presenceData.details = `Reading manga ${list[1].textContent}`;
 				presenceData.state = `Volume: ${tom}, Chapter: ${between(
 					list[3].textContent,
 					"Глава ",
@@ -163,8 +165,8 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "Read manga",
-						url: document.location.href
-					}
+						url: href,
+					},
 				];
 			} else {
 				const name = document.querySelector<HTMLAnchorElement>(
@@ -177,8 +179,8 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "Read manga",
-						url: document.location.href
-					}
+						url: href,
+					},
 				];
 			}
 		} else if (hasNumber(paths[1])) {
@@ -191,15 +193,15 @@ presence.on("UpdateData", async () => {
 
 			if (name) presenceData.details = `Viewing manga ${name}`;
 
-			presenceData.largeImageKey = image ?? "logo";
+			presenceData.largeImageKey = image ?? Assets.Logo;
 
-			if (image) presenceData.smallImageKey = "logo";
+			if (image) presenceData.smallImageKey = Assets.Logo;
 
 			presenceData.buttons = [
 				{
 					label: "View manga",
-					url: document.location.href
-				}
+					url: href,
+				},
 			];
 		} else if (paths[1])
 			presenceData.details = `Viewing manga starting with ${paths[1].toUpperCase()}`;
@@ -218,7 +220,7 @@ interface IFrameData {
 presence.on("iFrameData", async (data: IFrameData) => {
 	if (!data.currentTime || !data.duration) return;
 	const presenceData: PresenceData = {
-			largeImageKey: "logo"
+			largeImageKey: Assets.Logo,
 		},
 		showThumb = await presence.getSetting<boolean>("showthumb"),
 		epInfo = getInfo(),
@@ -234,7 +236,7 @@ presence.on("iFrameData", async (data: IFrameData) => {
 				Math.floor(data.duration)
 			);
 	} else {
-		presenceData.smallImageKey = "start";
+		presenceData.smallImageKey = Assets.Pause;
 		presenceData.smallImageText = "Paused";
 	}
 
@@ -243,8 +245,8 @@ presence.on("iFrameData", async (data: IFrameData) => {
 	presenceData.buttons = [
 		{
 			label: "Watch anime",
-			url: document.location.href
-		}
+			url: document.location.href,
+		},
 	];
 
 	if (epInfo.part)
@@ -252,7 +254,7 @@ presence.on("iFrameData", async (data: IFrameData) => {
 
 	if (thumb !== "logo" && showThumb) {
 		presenceData.largeImageKey = thumb;
-		presenceData.smallImageKey = data.paused ? "start" : "logo";
+		presenceData.smallImageKey = data.paused ? Assets.Pause : Assets.Logo;
 	}
 
 	if (presenceData.details) presence.setActivity(presenceData);
@@ -280,7 +282,7 @@ function getInfo(): {
 	return {
 		name,
 		episode: parseInt(rep, 10),
-		part: parseInt(part, 10)
+		part: parseInt(part, 10),
 	};
 }
 
@@ -295,7 +297,7 @@ function parseAvatarFromAttr(attr: string, def?: string): string {
 		avatar === "https://static.animes-portal.info/assets/images/avatar.svg" ||
 		!avatar
 	)
-		avatar = def || "defaultav";
+		avatar = def || Assets.Logo;
 
 	return avatar;
 }

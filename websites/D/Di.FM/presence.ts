@@ -1,25 +1,27 @@
 const presence = new Presence({
-	clientId: "630542731701387276"
+	clientId: "630542731701387276",
 });
 
 presence.on("UpdateData", () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "dilogo"
+		largeImageKey: "https://cdn.rcd.gg/PreMiD/websites/D/Di.FM/assets/logo.png",
 	};
 	if (
-		document.getElementById("webplayer-region").getAttribute("data-state") ===
+		document.querySelector("#webplayer-region").getAttribute("data-state") ===
 		"playing"
 	) {
 		presenceData.details = document
-			.getElementsByClassName("artist-name")[0]
+			.querySelectorAll(".artist-name")[0]
 			.textContent.replace("-", "");
 		presenceData.state =
-			document.getElementsByClassName("track-name")[0].textContent;
-		presenceData.smallImageKey = "play";
+			document.querySelectorAll(".track-name")[0].textContent;
+		presenceData.smallImageKey = Assets.Play;
+		presenceData.largeImageKey = document.querySelector<HTMLImageElement>(
+			"div > section.track-region.col > div > div.artwork > div > img"
+		).src;
 	} else {
 		presenceData.state = "Browsing...";
-		presenceData.smallImageKey = "pause";
+		presenceData.smallImageKey = Assets.Pause;
 	}
-
 	presence.setActivity(presenceData);
 });

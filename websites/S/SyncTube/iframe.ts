@@ -5,7 +5,7 @@ iframe.on("UpdateData", async () => {
 
 	if (!isNaN(video?.duration)) {
 		iframe.send({
-			current: video.currentTime,
+			currentTime: video.currentTime,
 			duration: video.duration,
 			paused: video.paused,
 			title:
@@ -17,7 +17,7 @@ iframe.on("UpdateData", async () => {
 				).textContent || "Unknown",
 			url: document.querySelector<HTMLAnchorElement>(
 				"a.ytp-youtube-button.ytp-button.yt-uix-sessionlink"
-			)?.href
+			)?.href,
 		});
 	}
 });

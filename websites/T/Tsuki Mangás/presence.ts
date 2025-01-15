@@ -1,14 +1,47 @@
 const presence = new Presence({
-	clientId: "714001239351885904"
+	clientId: "714001239351885904",
 });
+
 enum ResourceNames {
 	logo = "logo",
 	reading = "reading",
 	search = "search",
 	writing = "writing",
 	history = "history",
-	info = "info"
+	info = "info",
 }
+
+/* eslint-disable camelcase */
+const assets = {
+	logo_cloud_dark:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/0.png",
+	logo_book_dark:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/1.png",
+	logo_book:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/2.png",
+	logo_cloud:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/3.png",
+	reading_dark: Assets.Reading,
+	writing: Assets.Writing,
+	reading: Assets.Reading,
+	search_dark: Assets.Search,
+	search: Assets.Search,
+	writing_dark: Assets.Writing,
+	history_dark:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/4.png",
+	history:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/5.png",
+	info: "https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/6.png",
+	info_dark:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/7.png",
+	hatsune_miku:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/8.png",
+	bell: "https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/9.png",
+	bell_dark:
+		"https://cdn.rcd.gg/PreMiD/websites/T/Tsuki%20Mang%C3%A1s/assets/10.png",
+};
+/* eslint-enable camelcase */
+
 async function Resource(ResourceSelected: ResourceNames): Promise<string> {
 	let value = ResourceSelected.toString();
 	const logo = await presence.getSetting<number>("logo"),
@@ -16,24 +49,23 @@ async function Resource(ResourceSelected: ResourceNames): Promise<string> {
 	if (ResourceSelected === ResourceNames.logo)
 		logo !== 0 ? (value += "_book") : (value += "_cloud");
 	if (darkmode) value += "_dark";
-	return value;
+	return assets[value as keyof typeof assets];
 }
+
 function getPagination(pagN: number): number[] {
-	const pagination = document.getElementsByClassName("pagination")[pagN];
+	const pagination = document.querySelectorAll(".pagination")[pagN];
 	let current = 1,
 		max = 1;
 	if (pagination) {
-		current = parseInt(
-			pagination.getElementsByClassName("active")[0].textContent
-		);
-		pagination.childNodes.forEach(item => {
+		current = parseInt(pagination.querySelectorAll(".active")[0].textContent);
+		for (const item of pagination.childNodes) {
 			if (
 				item.nodeName === "LI" &&
 				!isNaN(parseInt(item.textContent)) &&
 				parseInt(item.textContent) > max
 			)
 				max = parseInt(item.textContent);
-		});
+		}
 	}
 	return [current, max];
 }
@@ -42,9 +74,9 @@ presence.on("UpdateData", async () => {
 	const pathName = window.location.pathname,
 		notfound =
 			window.location.pathname === "/404" ||
-			document.getElementsByClassName("notfound").length !== 0,
+			document.querySelectorAll(".notfound").length !== 0,
 		presenceData: PresenceData = {
-			largeImageKey: await Resource(ResourceNames.logo)
+			largeImageKey: await Resource(ResourceNames.logo),
 		};
 	if (await presence.getSetting<boolean>("resetTimestamp"))
 		browsingTimestamp = Math.floor(Date.now() / 1000);
@@ -52,10 +84,10 @@ presence.on("UpdateData", async () => {
 		let lancamentos = "...";
 		const qlancamentos = document.querySelectorAll("div.leflist > div");
 		if (qlancamentos.length > 0) {
-			qlancamentos.forEach(item => {
+			for (const item of qlancamentos) {
 				if (item.className.includes("activedlanca"))
 					lancamentos = item.textContent;
-			});
+			}
 		}
 		presenceData.details = "Início";
 		presenceData.state = `Lançamentos: ${lancamentos}`;
@@ -75,10 +107,10 @@ presence.on("UpdateData", async () => {
 			"div.multiselect>div>div>span>span"
 		);
 		if (GenerosN.length > 0) {
-			GenerosN.forEach(item => {
+			for (const item of GenerosN) {
 				if (Generos.length === 0) Generos += item.textContent;
 				else Generos += `, ${item.textContent}`;
-			});
+			}
 		}
 		presenceData.state = `Gêneros: ${!Generos.trim() ? "Todos" : Generos}`;
 		presenceData.startTimestamp = browsingTimestamp;
@@ -142,11 +174,11 @@ presence.on("UpdateData", async () => {
 		const qgender = document.querySelector("div.mtop>span");
 		let gender = "";
 		if (qgender) {
-			qgender.childNodes.forEach(item => {
-				if (item.textContent === "Gêneros:") return;
+			for (const item of qgender.childNodes) {
+				if (item.textContent === "Gêneros:") continue;
 				if (gender !== "") gender += ", ";
 				gender += item.textContent.replace(/^\s+|\s+$/g, "");
-			});
+			}
 		}
 		if (gender !== "") {
 			presenceData.smallImageKey = await Resource(ResourceNames.search);
@@ -220,35 +252,31 @@ presence.on("UpdateData", async () => {
 	}
 	if (
 		(await presence.getSetting<boolean>("showHistory")) &&
-		document.getElementsByClassName("historicob").length !== 0
+		document.querySelectorAll(".historicob").length !== 0 &&
+		parseInt(
+			document
+				.querySelectorAll(".historicob")[0]
+				.parentElement.style.width.replace("%", "")
+		) !== 0
 	) {
-		if (
-			parseInt(
-				document
-					.getElementsByClassName("historicob")[0]
-					.parentElement.style.width.replace("%", "")
-			) !== 0
-		) {
-			let hSession;
-			document.querySelectorAll("div.selecths").forEach(item => {
-				if (item.classList[item.classList.length - 1].includes("selecths"))
-					hSession = `${item.childNodes[0].textContent} ${item.childNodes[1].textContent}`;
-			});
-			const qUser = document.querySelector("#menu>li>ul>a");
-			let user = qUser
-				? (qUser as HTMLLinkElement).href.split("/").slice(-1)[0]
-				: "...";
-			presenceData.details = "Vizualizando Histórico:";
-			presenceData.state = `${document
-				.getElementsByClassName("activmancap")[0]
-				.textContent.replace(/^\s+|\s+$/g, "")} - ${hSession} - Página ${
-				getPagination(0)[0]
-			}/${getPagination(0)[1]}`;
-			if (!(await presence.getSetting<boolean>("showUserName")))
-				user = "👁‍🗨👁‍🗨";
-			presenceData.smallImageKey = await Resource(ResourceNames.history);
-			presenceData.smallImageText = `Username: ${user}`;
+		let hSession;
+		for (const item of document.querySelectorAll("div.selecths")) {
+			if (item.classList[item.classList.length - 1].includes("selecths"))
+				hSession = `${item.childNodes[0].textContent} ${item.childNodes[1].textContent}`;
 		}
+		const qUser = document.querySelector("#menu>li>ul>a");
+		let user = qUser
+			? (qUser as HTMLLinkElement).href.split("/").slice(-1)[0]
+			: "...";
+		presenceData.details = "Vizualizando Histórico:";
+		presenceData.state = `${document
+			.querySelectorAll(".activmancap")[0]
+			.textContent.replace(/^\s+|\s+$/g, "")} - ${hSession} - Página ${
+			getPagination(0)[0]
+		}/${getPagination(0)[1]}`;
+		if (!(await presence.getSetting<boolean>("showUserName"))) user = "👁‍🗨👁‍🗨";
+		presenceData.smallImageKey = await Resource(ResourceNames.history);
+		presenceData.smallImageText = `Username: ${user}`;
 	}
 	if (!presenceData.details) presence.setActivity();
 	else presence.setActivity(presenceData);

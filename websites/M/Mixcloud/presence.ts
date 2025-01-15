@@ -1,10 +1,10 @@
 const presence = new Presence({
-		clientId: "610102236374368267"
+		clientId: "610102236374368267",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		live: "presence.activity.live"
+		play: "general.playing",
+		pause: "general.paused",
+		live: "general.live",
 	});
 
 let author: string, title: string, url: string, openUrlText: string;
@@ -49,14 +49,15 @@ presence.on("UpdateData", async () => {
 		const presenceData: PresenceData = {
 			details: title,
 			state: author,
-			largeImageKey: "mixcloud",
-			smallImageKey: isPlaying ? "play" : "pause",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/M/Mixcloud/assets/logo.png",
+			smallImageKey: isPlaying ? Assets.Play : Assets.Pause,
 			smallImageText: isPlaying ? (await strings).play : (await strings).pause,
-			buttons: [{ label: openUrlText, url }]
+			buttons: [{ label: openUrlText, url }],
 		};
 
 		if (liveIsPlaying) {
-			presenceData.smallImageKey = "live";
+			presenceData.smallImageKey = Assets.Live;
 			presenceData.smallImageText = (await strings).live;
 		}
 

@@ -1,12 +1,12 @@
 const presence = new Presence({
-		clientId: "700338425953386587"
+		clientId: "700338425953386587",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		browsing: "presence.activity.browsing",
-		searching: "presence.activity.searching",
-		reading: "presence.activity.reading"
+		play: "general.playing",
+		pause: "general.paused",
+		browsing: "general.browsing",
+		searching: "general.searching",
+		reading: "general.reading",
 	});
 
 function parseQueryString(queryString?: string) {
@@ -14,18 +14,19 @@ function parseQueryString(queryString?: string) {
 
 	const params: { [queryKey: string]: string } = {},
 		queries = queryString.split("&");
-	queries.forEach((indexQuery: string) => {
+	for (const indexQuery in queries) {
 		const indexPair = indexQuery.split("=");
 		params[decodeURIComponent(indexPair[0])] = decodeURIComponent(
 			indexPair.length > 1 ? indexPair[1] : ""
 		);
-	});
+	}
 	return params;
 }
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "logo"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/I/Issou%20TV/assets/logo.png",
 		},
 		pageTitle = document.querySelector("title").textContent.split(" | "),
 		browsingTimestamp = Math.floor(Date.now() / 1000),
@@ -49,22 +50,22 @@ presence.on("UpdateData", async () => {
 				"18",
 				"18-gore",
 				"18-insolite",
-				"18-vr"
+				"18-vr",
 			];
-			routes.forEach(r => {
+			for (const r of routes) {
 				if (route[3] === `${r}`) {
 					presenceData.state = `${pageTitle[0]} - page ${
 						route[4] ? route[5] : 1
 					}`;
 				}
-			});
+			}
 			presenceData.startTimestamp = browsingTimestamp;
 		} else {
 			const video: HTMLVideoElement = document.querySelector(
 				".mejs-mediaelement > mediaelementwrapper > video"
 			);
 			[presenceData.details] = pageTitle;
-			presenceData.smallImageKey = video.paused ? "pause" : "play";
+			presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play;
 			presenceData.smallImageText = video.paused
 				? (await strings).pause
 				: (await strings).play;
@@ -80,14 +81,14 @@ presence.on("UpdateData", async () => {
 		}
 	} else if (document.location.pathname.includes("/upload")) {
 		[presenceData.details] = pageTitle;
-		presenceData.smallImageKey = "uploading";
+		presenceData.smallImageKey = Assets.Uploading;
 	} else {
 		[presenceData.details] = pageTitle;
 		presenceData.state = (await strings).reading;
 		presenceData.startTimestamp = browsingTimestamp;
 	}
 	if (query) {
-		presenceData.smallImageKey = "search";
+		presenceData.smallImageKey = Assets.Search;
 		presenceData.smallImageText = (await strings).searching;
 		presenceData.details = `${(await strings).searching} : ${query}`;
 	}

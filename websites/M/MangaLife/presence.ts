@@ -1,67 +1,80 @@
 const presence = new Presence({ clientId: "906057236927893576" }),
 	browsingStamp = Math.floor(Date.now() / 1000);
 
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/logo.png",
+	LogoPng = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/0.png",
+	Subscriptions = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/1.png",
+	Discussions = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/2.png",
+	Contact = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/3.png",
+	Privacy = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/4.png",
+	Hot = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/5.png",
+	Bookmark = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/6.png",
+	Home = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/7.png",
+	Settings = "https://cdn.rcd.gg/PreMiD/websites/M/MangaLife/assets/8.png",
+}
+
 presence.on("UpdateData", async () => {
 	const [privacy, cover, timestamps, buttons] = await Promise.all([
 			presence.getSetting<boolean>("privacy"),
 			presence.getSetting<boolean>("cover"),
 			presence.getSetting<boolean>("timestamps"),
-			presence.getSetting<boolean>("buttons")
+			presence.getSetting<boolean>("buttons"),
 		]),
 		path = document.location.pathname,
 		pages: Record<string, PresenceData> = {
 			"/manga/": {
 				details: "Viewing a Manga...",
-				state: document.title.split(" | MangaLife")[0]
+				state: document.title.split(" | MangaLife")[0],
 			},
 			"/read-online/": {
-				smallImageKey: "reading"
+				smallImageKey: Assets.Reading,
 			},
 			"/search": {
-				smallImageKey: "search",
-				details: "Searching..."
+				smallImageKey: Assets.Search,
+				details: "Searching...",
 			},
 			"/discussion": {
-				smallImageKey: !privacy ? "discussions" : "",
-				state: "Discussions"
+				smallImageKey: !privacy ? Assets.Discussions : "",
+				state: "Discussions",
 			},
 			"hot.php": {
-				smallImageKey: !privacy ? "hot" : "",
+				smallImageKey: !privacy ? Assets.Hot : "",
 				state: "Hot Manga Updates",
-				buttons: [{ label: "Hot Manga Updates", url: `${document.location}` }]
+				buttons: [{ label: "Hot Manga Updates", url: `${document.location}` }],
 			},
 			"subscription.php": {
-				smallImageKey: !privacy ? "subscriptions" : "",
-				state: "Subscriptions"
+				smallImageKey: !privacy ? Assets.Subscriptions : "",
+				state: "Subscriptions",
 			},
 			"feed.php": {
-				smallImageKey: !privacy ? "subscriptions" : "",
-				state: "Subscriptions Feed"
+				smallImageKey: !privacy ? Assets.Subscriptions : "",
+				state: "Subscriptions Feed",
 			},
 			"bookmark.php": {
-				smallImageKey: !privacy ? "bookmark" : "",
-				state: "Bookmarks"
+				smallImageKey: !privacy ? Assets.Bookmark : "",
+				state: "Bookmarks",
 			},
 			"settings.php": {
-				smallImageKey: "settings",
+				smallImageKey: Assets.Settings,
 				details: "Editing...",
-				state: "User Settings"
+				state: "User Settings",
 			},
 			"/contact": {
-				smallImageKey: !privacy ? "contact" : "",
-				state: "Contact Page"
+				smallImageKey: !privacy ? Assets.Contact : "",
+				state: "Contact Page",
 			},
 			"/privacy": {
-				smallImageKey: !privacy ? "privacy" : "",
-				state: "Privacy Policy Page"
-			}
+				smallImageKey: !privacy ? Assets.Privacy : "",
+				state: "Privacy Policy Page",
+			},
 		};
 	let presenceData: PresenceData = {
-		largeImageKey: "logo",
-		smallImageKey: !privacy ? "home" : "",
+		largeImageKey: Assets.Logo,
+		smallImageKey: !privacy ? Assets.Home : "",
 		details: "Browsing...",
 		state: "Home Page",
-		startTimestamp: browsingStamp
+		startTimestamp: browsingStamp,
 	};
 
 	for (const [path, data] of Object.entries(pages)) {
@@ -76,24 +89,27 @@ presence.on("UpdateData", async () => {
 		case path.startsWith("/manga/"):
 			presenceData.largeImageKey =
 				!privacy && cover
-					? `https://cover.nep.li/cover/${path.split("/manga/")[1]}.jpg`
-					: "logo";
-			presenceData.smallImageKey = !privacy && cover ? "logo-png" : "search";
+					? `https://temp.compsci88.com/cover/${path.split("/manga/")[1]}.jpg`
+					: Assets.Logo;
+			presenceData.smallImageKey =
+				!privacy && cover ? Assets.LogoPng : Assets.Search;
 			presenceData.buttons = [
 				{
 					label:
-						presenceData.state.length >= 30 ? "View Manga" : presenceData.state,
-					url: `${document.location}`
-				}
+						(presenceData.state as string).length >= 30
+							? "View Manga"
+							: presenceData.state,
+					url: `${document.location}`,
+				},
 			];
 			break;
 		case path.startsWith("/read-online/"):
 			presenceData.largeImageKey =
 				!privacy && cover
-					? `https://cover.nep.li/cover/${
+					? `https://temp.compsci88.com/cover/${
 							path.split("/read-online/")[1].split("-chapter-")[0]
 					  }.jpg`
-					: "logo";
+					: Assets.Logo;
 			presenceData.details = !privacy
 				? document.querySelector(".col-12 > a").textContent.trim()
 				: "Reading a Manga...";
@@ -110,12 +126,12 @@ presence.on("UpdateData", async () => {
 							: presenceData.details,
 					url: `${document.location.origin}/manga/${
 						path.split("/read-online/")[1].split("-chapter-")[0]
-					}`
+					}`,
 				},
 				{
 					label: `${presenceData.state.replace("|", " ")}`,
-					url: `${document.location}`
-				}
+					url: `${document.location}`,
+				},
 			];
 			break;
 		case path.startsWith("/search"):

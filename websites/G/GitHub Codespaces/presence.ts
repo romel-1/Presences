@@ -3,7 +3,7 @@ interface ImageKeyMap {
 }
 
 const presence = new Presence({
-		clientId: "778572824708775946"
+		clientId: "778572824708775946",
 	}),
 	// Maps editor mode titles to respective images
 	langMap: ImageKeyMap = {
@@ -70,7 +70,7 @@ const presence = new Presence({
 		"reason.hover.type": { image: "reasonml" },
 		"jest-snapshot": { image: "jest" },
 		erb: { image: "ruby" },
-		"x86 and x86_64 Assembly": { image: "assembly" }
+		"x86 and x86_64 Assembly": { image: "assembly" },
 		// Auto-maps keys to identical image keys
 	},
 	// https://github.com/iCrawl/discord-vscode/blob/master/src/data/languages.json
@@ -94,13 +94,13 @@ const presence = new Presence({
 		".aspx": { image: "asp" },
 		".axd": { image: "asp" },
 		"/\\.setTrayTitle(l?a|[ls]?o|out|s|a51|asm|axf|elf|prx|puff|z80)$/i": {
-			image: "assembly"
+			image: "assembly",
 		},
 		".agc": { image: "assembly" },
 		".ko": { image: "assembly" },
 		".lst": { image: "assembly" },
 		"/\\.setTrayTitle((c([+px]{2}?)?-?)?objdump|bsdiff|bin|dat|pak|pdb)$/i": {
-			image: "assembly"
+			image: "assembly",
 		},
 		".d-objdump": { image: "assembly" },
 		"/\\.gcode|\\.gco/i": { image: "assembly" },
@@ -162,7 +162,7 @@ const presence = new Presence({
 		".dme": { image: "dm" },
 		".dmm": { image: "dm" },
 		"/^(Dockerfile|docker-compose)|\\.docker(file|ignore)$/i": {
-			image: "docker"
+			image: "docker",
 		},
 		"/^docker-sync\\.yml$/i": { image: "docker" },
 		".editorconfig": { image: "editorconfig" },
@@ -285,19 +285,19 @@ const presence = new Presence({
 		"/^METADATA\\.pb$/": { image: "manifest" },
 		"/[\\/\\\\](?:magic[\\/\\\\]Magdir|file[\\/\\\\]magic)[\\/\\\\][-.\\w]+$/i":
 			{
-				image: "manifest"
+				image: "manifest",
 			},
 		"/(\\\\|\\/)dev[-\\w]+\\1(?:[^\\\\\\/]+\\1)*(?!DESC|NOTES)(?:[A-Z][-A-Z]*)(?:\\.in)?$/":
 			{
-				image: "manifest"
+				image: "manifest",
 			},
 		"lib/icons/.icondb.js": { image: "manifest" },
 		"/\\.git[\\/\\\\](.*[\\/\\\\])?(HEAD|ORIG_HEAD|packed-refs|logs[\\/\\\\](.+[\\/\\\\])?[^\\/\\\\]+)$/":
 			{
-				image: "manifest"
+				image: "manifest",
 			},
 		"/\\.setTrayTitle(md|mdown|markdown|mkd|mkdown|mdwn|mkdn|rmd|ron|pmd)$/i": {
-			image: "markdown"
+			image: "markdown",
 		},
 		".mdx": { image: "markdownx" },
 		".marko": { image: "marko" },
@@ -348,7 +348,7 @@ const presence = new Presence({
 		".ps1xml": { image: "powershell" },
 		".prettierignore": { image: "prettier" },
 		"/\\.prettier((rc)|(\\.setTrayTitle(toml|yml|yaml|json|js))?$){2}/i": {
-			image: "prettier"
+			image: "prettier",
 		},
 		"prettier.config.js": { image: "prettier" },
 		"prisma.yml": { image: "prisma" },
@@ -380,12 +380,12 @@ const presence = new Presence({
 		".re": { image: "reasonml" },
 		"/\\.setTrayTitle(rb|ru|ruby|erb|gemspec|god|mspec|pluginspec|podspec|rabl|rake|opal)$/i":
 			{
-				image: "ruby"
+				image: "ruby",
 			},
 		"/^\\.?(irbrc|gemrc|pryrc|ruby-(gemset|version))$/i": { image: "ruby" },
 		"/^(Appraisals|(Rake|[bB]uild|Cap|Danger|Deliver|Fast|Guard|Jar|Maven|Pod|Puppet|Snap)file(\\.lock)?)$/":
 			{
-				image: "ruby"
+				image: "ruby",
 			},
 		"/\\.setTrayTitle(jbuilder|rbuild|rb[wx]|builder)$/i": { image: "ruby" },
 		"/^rails$/": { image: "ruby" },
@@ -395,17 +395,17 @@ const presence = new Presence({
 		".scss": { image: "scss" },
 		".sass": { image: "scss" },
 		"/\\.setTrayTitle(sh|rc|bats|bash|tool|install|command)$/i": {
-			image: "shell"
+			image: "shell",
 		},
 		"/^(\\.?bash(rc|[-_]?(profile|login|logout|history|prompt))|_osc|config|install-sh|PKGBUILD)$/i":
 			{
-				image: "shell"
+				image: "shell",
 			},
 		"/\\.setTrayTitle(ksh|mksh|pdksh)$/i": { image: "shell" },
 		".sh-session": { image: "shell" },
 		"/\\.zsh(-theme|_history)?$|^\\.?(antigen|zpreztorc|zlogin|zlogout|zprofile|zshenv|zshrc)$/i":
 			{
-				image: "shell"
+				image: "shell",
 			},
 		"/\\.fish$|^\\.fishrc$/i": { image: "shell" },
 		"/^\\.?(login|profile)$/": { image: "shell" },
@@ -413,10 +413,10 @@ const presence = new Presence({
 		".tmux": { image: "shell" },
 		"/^(configure|config\\.setTrayTitle(guess|rpath|status|sub)|depcomp|libtool|compile)$/":
 			{
-				image: "shell"
+				image: "shell",
 			},
 		"/^\\/(private\\/)?etc\\/([^\\/]+\\/)*(profile$|nanorc$|rc\\.|csh\\.)/i": {
-			image: "shell"
+			image: "shell",
 		},
 		"/^\\.?cshrc$/i": { image: "shell" },
 		".profile": { image: "shell" },
@@ -475,7 +475,7 @@ const presence = new Presence({
 		".wasm": { image: "wasm" },
 		"/webpack(\\.dev|\\.development|\\.prod|\\.production)?\\.config(\\.babel)?\\.setTrayTitle(js|jsx|coffee|ts|json|json5|yaml|yml)/i":
 			{
-				image: "webpack"
+				image: "webpack",
 			},
 		".xml": { image: "xml" },
 		"/\\.ya?ml$/i": { image: "yaml" },
@@ -485,23 +485,232 @@ const presence = new Presence({
 
 		".json": { image: "json" },
 		".js": { image: "js" },
-		".css": { image: "css" }
+		".css": { image: "css" },
+	},
+	assets = {
+		arduino:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/0.png",
+		appveyor:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/1.png",
+		assembly:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/2.png",
+		ahk: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/3.png",
+		angular:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/4.png",
+		android:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/5.png",
+		as: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/6.png",
+		applescript:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/7.png",
+		c: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/8.png",
+		asp: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/9.png",
+		bower:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/10.png",
+		bat: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/11.png",
+		autoit:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/12.png",
+		cargo:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/13.png",
+		cmake:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/14.png",
+		clojure:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/15.png",
+		circleci:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/16.png",
+		brainfuck:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/17.png",
+		css: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/18.png",
+		crystal:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/19.png",
+		elm: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/20.png",
+		cshtml:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/21.png",
+		docker:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/22.png",
+		cssmap:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/23.png",
+		coffee:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/24.png",
+		dart: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/25.png",
+		dm: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/26.png",
+		elixir:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/27.png",
+		d: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/28.png",
+		cuda: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/29.png",
+		denizen:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/30.png",
+		cpp: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/31.png",
+		ejs: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/32.png",
+		delphi:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/33.png",
+		csharp:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/34.png",
+		editorconfig:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/35.png",
+		fsharp:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/36.png",
+		flowconfig:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/37.png",
+		env: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/38.png",
+		firebase:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/39.png",
+		git: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/40.png",
+		gemfile:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/41.png",
+		haskell:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/42.png",
+		erlang:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/43.png",
+		heroku:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/44.png",
+		gradle:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/45.png",
+		go: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/46.png",
+		handlebars:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/47.png",
+		eslint:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/48.png",
+		haxe: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/49.png",
+		harbour:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/50.png",
+		gulp: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/51.png",
+		godot:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/52.png",
+		graphql:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/53.png",
+		groovy:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/54.png",
+		gruntfile:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/55.png",
+		json: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/56.png",
+		julia:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/57.png",
+		log: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/58.png",
+		hjson:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/59.png",
+		jsx: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/60.png",
+		js: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/61.png",
+		jsmap:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/62.png",
+		makefile:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/63.png",
+		kotlin:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/64.png",
+		html: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/65.png",
+		http: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/66.png",
+		lua: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/67.png",
+		less: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/68.png",
+		livescript:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/69.png",
+		jest: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/70.png",
+		java: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/71.png",
+		lisp: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/72.png",
+		jupyter:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/73.png",
+		manifest:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/74.png",
+		marko:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/75.png",
+		npm: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/76.png",
+		nim: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/77.png",
+		markdownx:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/78.png",
+		markdown:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/79.png",
+		nodemon:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/80.png",
+		r: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/81.png",
+		prisma:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/82.png",
+		reasonml:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/83.png",
+		python:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/84.png",
+		php: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/85.png",
+		powershell:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/86.png",
+		ocaml:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/87.png",
+		perl: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/88.png",
+		prettier:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/89.png",
+		pawn: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/90.png",
+		purescript:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/91.png",
+		objc: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/92.png",
+		ponylang:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/93.png",
+		postcss:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/94.png",
+		pug: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/95.png",
+		pascal:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/96.png",
+		processing:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/97.png",
+		ruby: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/98.png",
+		rust: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/99.png",
+		scss: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/100.png",
+		stylus:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/101.png",
+		shell:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/102.png",
+		scala:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/103.png",
+		sqf: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/104.png",
+		sql: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/105.png",
+		svelte:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/106.png",
+		swift:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/107.png",
+		svg: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/108.png",
+		toml: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/109.png",
+		txt: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/110.png",
+		travis:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/111.png",
+		tex: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/112.png",
+		text: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/113.png",
+		tsx: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/114.png",
+		ts: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/115.png",
+		v: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/116.png",
+		yaml: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/117.png",
+		vb: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/118.png",
+		vcxproj:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/119.png",
+		yarn: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/120.png",
+		wasm: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/121.png",
+		vala: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/122.png",
+		xml: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/123.png",
+		vue: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/124.png",
+		vba: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/125.png",
+		vscodeignore:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/126.png",
+		zig: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/127.png",
+		webpack:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/128.png",
+		twig: "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/129.png",
+		gatsbyjs:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/130.png",
 	};
 
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/131.png",
+	Idle = "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/132.png",
+	Logo2 = "https://cdn.rcd.gg/PreMiD/websites/G/GitHub%20Codespaces/assets/133.png",
+}
 let lastFileChange: number = null,
 	lastFile: string = null;
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			smallImageKey: "gh",
-			smallImageText: "GitHub Codespaces"
+			smallImageKey: Assets.Logo,
+			smallImageText: "GitHub Codespaces",
 		},
 		activeTab = document.querySelector(".tab.active"),
-		editorMode = document.getElementById("status.editor.mode");
+		editorMode = document.querySelector("#status.editor.mode");
 
 	// Preparing Screen
 	if (document.querySelector(".vscs-splash-screen-steps-pane")) {
-		presenceData.largeImageKey = "gh-lg";
+		presenceData.largeImageKey = Assets.Logo2;
 		presenceData.details = "Preparing a codespace...";
 		delete presenceData.smallImageKey;
 
@@ -534,35 +743,38 @@ presence.on("UpdateData", async () => {
 		}
 
 		presenceData.startTimestamp = lastFileChange;
-		presenceData.largeImageKey = largeImageKey ? largeImageKey.image : "txt";
+		presenceData.largeImageKey =
+			assets[
+				(largeImageKey ? largeImageKey.image : "txt") as keyof typeof assets
+			];
 		presenceData.details = (await presence.getSetting<string>("details"))
-			.replace(/%file%/g, filename)
-			.replace(/%path%/g, filepath)
-			.replace(/%folder%/g, filepath.split("/").reverse()[1])
-			.replace(
-				/%ext%/g,
+			.replaceAll("%file%", filename)
+			.replaceAll("%path%", filepath)
+			.replaceAll("%folder%", filepath.split("/").reverse()[1])
+			.replaceAll(
+				"%ext%",
 				(largeImageKey ? largeImageKey.image : "txt").toUpperCase()
 			)
-			.replace(/%workspace%/g, workspace || "N/A")
-			.replace(
-				/%workspaceOrFolder%/g,
+			.replaceAll("%workspace%", workspace || "N/A")
+			.replaceAll(
+				"%workspaceOrFolder%",
 				workspace || filepath.split("/").reverse()[1]
 			);
 		presenceData.state = (await presence.getSetting<string>("state"))
-			.replace(/%file%/g, filename)
-			.replace(/%path%/g, filepath)
-			.replace(/%folder%/g, filepath.split("/").reverse()[1])
-			.replace(
-				/%ext%/g,
+			.replaceAll("%file%", filename)
+			.replaceAll("%path%", filepath)
+			.replaceAll("%folder%", filepath.split("/").reverse()[1])
+			.replaceAll(
+				"%ext%",
 				(largeImageKey ? largeImageKey.image : "txt").toUpperCase()
 			)
-			.replace(/%workspace%/g, workspace || "N/A")
-			.replace(
-				/%workspaceOrFolder%/g,
+			.replaceAll("%workspace%", workspace || "N/A")
+			.replaceAll(
+				"%workspaceOrFolder%",
 				workspace || filepath.split("/").reverse()[1]
 			);
 	} else if (!editorMode) {
-		presenceData.largeImageKey = "idle";
+		presenceData.largeImageKey = Assets.Idle;
 		presenceData.details = "Idling";
 	}
 

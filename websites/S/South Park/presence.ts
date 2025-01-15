@@ -1,46 +1,42 @@
 const presence = new Presence({
-		clientId: "819942708604174376"
+		clientId: "819942708604174376",
 	}),
-	startsTime = Math.floor(Date.now() / 1000);
+	startTime = Math.floor(Date.now() / 1000);
+
+let SouthParkData: Data;
 
 presence.on("UpdateData", async () => {
 	const video = document.querySelector("video"),
 		path = document.location.pathname,
-		SouthParkData = await presence.getPageletiable<Data>("__DATA__"),
-		buttons = await presence.getSetting<boolean>("buttons");
+		showButtons = await presence.getSetting<boolean>("buttons");
+
+	SouthParkData ??= await presence.getPageletiable<Data>("__DATA__");
+	const data = SouthParkData.children[0].handleTVEAuthRedirection;
 
 	let presenceData: PresenceData = {
-		largeImageKey: "south_park_logo",
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/S/South%20Park/assets/logo.jpg",
 		details: "Browsing...",
-		smallImageKey: "reading",
-		startTimestamp: startsTime
+		smallImageKey: Assets.Reading,
+		startTimestamp: startTime,
+		type: ActivityType.Watching,
 	};
 
 	if (path.includes("/episodes/") || path.includes("/episodios/")) {
-		const EpAndSeason = SouthParkData.children[0].props.title.text
-				.split(" - ")[1]
-				.match(/([1-9]?[0-9]?[0-9])/g),
-			[title, , EpTitle] =
-				SouthParkData.children[0].props.title.text.split(" - ");
+		const { title } = data.videoDetail,
+			{ subTitle } = data.videoDetail;
 
 		if (video) {
 			presenceData.details = title;
-			presenceData.state = `S${EpAndSeason[0]}:E${EpAndSeason[1]} ${EpTitle}`;
+			presenceData.state = subTitle;
 
 			presenceData.smallImageKey =
-				video.paused || isNaN(video.duration) ? "pause" : "play";
+				video.paused || isNaN(video.duration) ? Assets.Pause : Assets.Play;
 			presenceData.smallImageText =
 				video.paused || isNaN(video.duration) ? "Paused" : "Playing";
 
 			[presenceData.startTimestamp, presenceData.endTimestamp] =
-				presence.getTimestamps(
-					presence.timestampFromFormat(
-						document.querySelector("div.edge-gui-current-time")?.textContent
-					),
-					presence.timestampFromFormat(
-						document.querySelector("div.edge-gui-duration")?.textContent
-					)
-				);
+				presence.getTimestampsfromMedia(video);
 
 			presenceData.buttons = [
 				{
@@ -49,8 +45,8 @@ presence.on("UpdateData", async () => {
 						path.includes("/episodios/")
 							? "https://www.southpark.lat/episodios"
 							: "https://www.southparkstudios.com/episodes"
-					}/${document.location.pathname.split("/")[2]}`
-				}
+					}/${document.location.pathname.split("/")[2]}`,
+				},
 			];
 
 			if (video.paused || isNaN(video.duration)) {
@@ -58,8 +54,8 @@ presence.on("UpdateData", async () => {
 				delete presenceData.endTimestamp;
 			}
 		} else {
-			presenceData.details = "Viewing Episode:";
-			presenceData.state = `S${EpAndSeason[0]}:E${EpAndSeason[1]} ${EpTitle}`;
+			presenceData.details = "Viewing an episode:";
+			presenceData.state = `${subTitle}: ${title}`;
 		}
 	} else if (path.includes("/seasons/")) {
 		presenceData.details = "Viewing Episodes of:";
@@ -67,18 +63,11 @@ presence.on("UpdateData", async () => {
 			/(season-[1-9]?[0-9])/
 		)[0].replace("season-", "")}`;
 	} else if (path.includes("/collections/")) {
-		const [title] = SouthParkData.children[0].props.title.text.split(" - "),
-			EpAndSeason = document
-				.querySelector("div > div.sub-header > span")
-				.textContent.match(/([1-9]?[0-9]?[0-9])/g);
-
 		if (video) {
-			presenceData.details = title;
-			presenceData.state = `S${EpAndSeason[0]}:E${EpAndSeason[1]} ${
-				document.querySelector("div.header > span").textContent
-			}`;
+			presenceData.details = data.videoDetail.playlist.title;
+			presenceData.state = data.videoDetail.title;
 
-			presenceData.smallImageKey = video.paused ? "pause" : "play";
+			presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play;
 			presenceData.smallImageText = video.paused ? "Paused" : "Playing";
 
 			[presenceData.startTimestamp, presenceData.endTimestamp] =
@@ -86,11 +75,11 @@ presence.on("UpdateData", async () => {
 
 			presenceData.buttons = [
 				{
-					label: "Watch Episode",
+					label: "Watch Clip",
 					url: `https://www.southparkstudios.com/collections/${
 						document.location.pathname.split("/")[2]
-					}`
-				}
+					}`,
+				},
 			];
 
 			if (video.paused) {
@@ -98,8 +87,8 @@ presence.on("UpdateData", async () => {
 				delete presenceData.endTimestamp;
 			}
 		} else {
-			presenceData.details = "Viewing Collection:";
-			presenceData.state = title;
+			presenceData.details = "Viewing a collection:";
+			presenceData.state = data.videoDetail.playlist.title;
 		}
 	}
 
@@ -109,24 +98,24 @@ presence.on("UpdateData", async () => {
 		"/create-account/step-1": {
 			details: "Creating an account",
 			state: "Step 1 of 2",
-			smallImageKey: "writing"
+			smallImageKey: Assets.Writing,
 		},
 		"/create-account/step-2": {
 			details: "Creating an account",
 			state: "Step 2 of 2",
-			smallImageKey: "writing"
+			smallImageKey: Assets.Writing,
 		},
 		"/settings": {
 			details: "Viewing their:",
-			state: "Account details"
+			state: "Account details",
 		},
 		"/email-verification": {
 			details: "Viewing page:",
-			state: "Email verification"
+			state: "Email verification",
 		},
 		"/news": {
 			details: "Viewing page:",
-			state: "The news page"
+			state: "The news page",
 		},
 		"/news/": {
 			details: "Reading article:",
@@ -136,38 +125,41 @@ presence.on("UpdateData", async () => {
 					label: "Read article",
 					url: `https://www.southparkstudios.com/news/${
 						document.location.pathname.split("/")[2]
-					}`
-				}
-			]
+					}`,
+				},
+			],
 		},
 		"/avatar": {
 			details: "Viewing page:",
-			state: "Avatar creator"
+			state: "Avatar creator",
 		},
 		"/forum/v": {
 			details: "Reading forum:",
-			state: document.querySelector("h2")?.textContent
+			state: document.querySelector("h2")?.textContent,
 		},
 		"/wiki": {
 			details: "Viewing page:",
-			state: "Wiki"
-		}
+			state: "Wiki",
+		},
 	};
 
 	for (const [key, value] of Object.entries(pages))
 		if (path.match(key)) presenceData = { ...presenceData, ...value };
 
-	if (!buttons) delete presenceData.buttons;
+	if (!showButtons) delete presenceData.buttons;
 
 	presence.setActivity(presenceData);
 });
 
 interface Data {
 	children: {
-		type: string;
-		props: {
-			title: {
-				text: string;
+		handleTVEAuthRedirection: {
+			videoDetail: {
+				title: string;
+				subTitle: string;
+				playlist: {
+					title: string;
+				};
 			};
 		};
 	}[];

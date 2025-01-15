@@ -1,59 +1,63 @@
 const presence = new Presence({
-		clientId: "917456087299534858"
+		clientId: "917456087299534858",
 	}),
 	browsingTimestamp = Date.now() / 1000;
 
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/L/Last.fm/assets/logo.png",
+}
+
 presence.on("UpdateData", async () => {
 	let presenceData: PresenceData = {
-		largeImageKey: "lastfm",
-		smallImageKey: "browse",
-		startTimestamp: browsingTimestamp
+		largeImageKey: Assets.Logo,
+		smallImageKey: Assets.Search,
+		startTimestamp: browsingTimestamp,
 	};
 	const [buttons, timestamps, cover] = await Promise.all([
 			presence.getSetting<boolean>("buttons"),
 			presence.getSetting<boolean>("timestamps"),
-			presence.getSetting<boolean>("cover")
+			presence.getSetting<boolean>("cover"),
 		]),
 		pages: Record<string, PresenceData> = {
 			"/home": {
-				details: "Home"
+				details: "Home",
 			},
 			"/dashboard": {
-				details: "Dashboard"
+				details: "Dashboard",
 			},
 			"/features": {
-				details: "Features"
+				details: "Features",
 			},
 			"/events": {
-				details: "Events"
+				details: "Events",
 			},
 			"/charts": {
-				details: "Charts"
+				details: "Charts",
 			},
 			"/inbox": {
-				details: "Inbox"
+				details: "Inbox",
 			},
 			"/settings": {
-				details: "Settings"
+				details: "Settings",
 			},
 			"/pro": {
-				details: "Last.fm Pro"
+				details: "Last.fm Pro",
 			},
 			"/about": {
-				details: "About"
+				details: "About",
 			},
 			"/api": {
-				details: "Developer API"
+				details: "Developer API",
 			},
 			"/legal": {
-				details: "Legal"
+				details: "Legal",
 			},
 			"/help": {
-				details: "Help"
+				details: "Help",
 			},
 			"/search": {
 				details: "Searching for:",
-				state: new URLSearchParams(document.location.search).get("q")
+				state: new URLSearchParams(document.location.search).get("q"),
 			},
 			"/user": {
 				details: "Viewing user:",
@@ -63,9 +67,9 @@ presence.on("UpdateData", async () => {
 						url: document.querySelector<HTMLAnchorElement>(
 							"h1.header-title > a"
 						)?.href,
-						label: "View User"
-					}
-				]
+						label: "View User",
+					},
+				],
 			},
 			"/music": {
 				details: (() => {
@@ -87,10 +91,10 @@ presence.on("UpdateData", async () => {
 							return (
 								document.querySelector<HTMLImageElement>(
 									".album-overview-cover-art > .cover-art > img"
-								)?.src ?? "lastfm"
+								)?.src ?? Assets.Logo
 							);
-						} else return "lastfm";
-					} else return "lastfm";
+						} else return Assets.Logo;
+					} else return Assets.Logo;
 				})(),
 				state: document.querySelector("h1.header-new-title")?.textContent,
 				buttons: ((): [ButtonData] => {
@@ -98,26 +102,26 @@ presence.on("UpdateData", async () => {
 						return [
 							{
 								url: document.URL,
-								label: "View Album"
-							}
+								label: "View Album",
+							},
 						];
 					} else if (document.querySelector("body.artist-overview-new")) {
 						return [
 							{
 								url: document.URL,
-								label: "View Artist"
-							}
+								label: "View Artist",
+							},
 						];
 					} else if (document.querySelector("body.track-overview-new")) {
 						return [
 							{
 								url: document.URL,
-								label: "View Track"
-							}
+								label: "View Track",
+							},
 						];
 					}
-				})()
-			}
+				})(),
+			},
 		};
 
 	for (const [path, data] of Object.entries(pages)) {
@@ -152,16 +156,19 @@ presence.on("UpdateData", async () => {
 			).src;
 
 			presenceData.largeImageKey = artwork.includes("player_default_album")
-				? "lastfm"
+				? Assets.Logo
 				: artwork.replace("/174s/", "/1024s/");
-		} else presenceData.largeImageKey = "lastfm";
+		} else {
+			presenceData.largeImageKey =
+				"https://cdn.rcd.gg/PreMiD/websites/L/Last.fm/assets/logo.png";
+		}
 
 		presenceData.details = "Listening to:";
 		presenceData.state = document
 			.querySelector("p.player-bar-track.js-player-status")
 			?.getAttribute("title");
 
-		presenceData.smallImageKey = paused ? "pause" : "play";
+		presenceData.smallImageKey = paused ? Assets.Pause : Assets.Play;
 		presenceData.smallImageText = paused ? "Paused" : "Playing";
 
 		delete presenceData.startTimestamp;

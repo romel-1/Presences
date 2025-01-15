@@ -1,7 +1,11 @@
 const presence = new Presence({
-		clientId: "861567034706100234"
+		clientId: "861567034706100234",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
+
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/F/fbox.to/assets/logo.png",
+}
 
 let iFrameData: {
 	currTime: number;
@@ -15,68 +19,78 @@ presence.on(
 		iFrameData = data;
 	}
 );
-
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
 			startTimestamp: browsingTimestamp,
-			largeImageKey: "fbox_logo"
+			largeImageKey: Assets.Logo,
 		},
-		{ pathname } = document.location,
-		buttons = await presence.getSetting<boolean>("buttons");
+		{ pathname, href } = document.location,
+		[buttons, image] = await Promise.all([
+			presence.getSetting<boolean>("buttons"),
+			presence.getSetting<boolean>("image"),
+		]);
 
-	if (pathname === "/") presenceData.details = "Browsing";
-	else if (pathname.startsWith("/series/")) {
-		const title: HTMLHeadingElement = document.querySelector(
-				"#watch > div.container > div.watch-extra > div.bl-1 > section.info > div.info > h1"
+	if (pathname === "/home" || pathname === "/")
+		presenceData.details = "Browsing";
+	else if (pathname.startsWith("/tv/")) {
+		const title = document.querySelector<HTMLHeadingElement>(
+				"section#w-info > div.info > h1.name"
 			),
-			season: HTMLDataListElement = document.querySelector(
-				"#episodes > div.bl-seasons > ul > li.active"
-			),
-			date: HTMLSpanElement = season ? season.querySelector("span") : null,
-			episode: HTMLAnchorElement = document.querySelector(
-				".episodes > li > a.active"
-			);
+			{ season, episode } = extractSeasonEpisode(pathname);
 		if (title) presenceData.details = title.textContent;
-		if (season && date) {
-			presenceData.state = season.textContent.substring(
-				0,
-				season.textContent.indexOf(date.textContent)
-			);
-			if (episode) presenceData.state += episode.textContent;
+		if (season) {
+			presenceData.state = `Season ${season}`;
+			if (episode) presenceData.state += ` Episode ${episode}`;
+		}
+		if (image) {
+			presenceData.largeImageKey =
+				document
+					.querySelector("meta[property='og:image']")
+					?.getAttribute("content") ??
+				document
+					.querySelector('[class="poster"] > [itemprop="image"]')
+					?.getAttribute("src") ??
+				Assets.Logo;
 		}
 		if (iFrameData && !iFrameData.paused) {
-			[, presenceData.endTimestamp] = presence.getTimestamps(
-				iFrameData.currTime,
-				iFrameData.duration
-			);
-			presenceData.smallImageKey = "play";
-		} else presenceData.smallImageKey = "pause";
+			[presenceData.startTimestamp, presenceData.endTimestamp] =
+				presence.getTimestamps(iFrameData.currTime, iFrameData.duration);
+			presenceData.smallImageKey = Assets.Play;
+		} else presenceData.smallImageKey = Assets.Pause;
 		if (buttons) {
 			presenceData.buttons = [
 				{
 					label: "Watch Series",
-					url: document.location.href
-				}
+					url: href,
+				},
 			];
 		}
 	} else if (pathname.startsWith("/movie/")) {
-		const title: HTMLHeadingElement = document.querySelector(
-			"#watch > div.container > div.watch-extra > div.bl-1 > section.info > div.info > h1"
+		const title = document.querySelector<HTMLHeadingElement>(
+			"section#w-info > div.info > h1.name"
 		);
 		if (title) presenceData.details = title.textContent;
+		if (image) {
+			presenceData.largeImageKey =
+				document
+					.querySelector("meta[property='og:image']")
+					?.getAttribute("content") ??
+				document
+					.querySelector('[class="poster"] > [itemprop="image"]')
+					?.getAttribute("src") ??
+				Assets.Logo;
+		}
 		if (iFrameData && !iFrameData.paused) {
-			[, presenceData.endTimestamp] = presence.getTimestamps(
-				iFrameData.currTime,
-				iFrameData.duration
-			);
-			presenceData.smallImageKey = "play";
-		} else presenceData.smallImageKey = "pause";
+			[presenceData.startTimestamp, presenceData.endTimestamp] =
+				presence.getTimestamps(iFrameData.currTime, iFrameData.duration);
+			presenceData.smallImageKey = Assets.Play;
+		} else presenceData.smallImageKey = Assets.Pause;
 		if (buttons) {
 			presenceData.buttons = [
 				{
 					label: "Watch Movie",
-					url: document.location.href
-				}
+					url: href,
+				},
 			];
 		}
 	} else if (pathname === "/user/profile")
@@ -84,15 +98,28 @@ presence.on("UpdateData", async () => {
 	else if (pathname === "/user/watchlist")
 		presenceData.details = "Checking Watchlist";
 	else {
-		const genre: HTMLHeadingElement = document.querySelector(
-			"#body > div > div.col-left > section > div.heading > h1"
-		);
+		const genre = document.querySelector<HTMLHeadingElement>("section.bl h1");
 		if (genre) {
 			presenceData.details = genre.textContent;
-			presenceData.smallImageKey = "search";
+			presenceData.smallImageKey = Assets.Search;
 		}
 	}
 
-	if (presenceData.details) presence.setActivity(presenceData);
-	else presence.setActivity();
+	presence.setActivity(presenceData);
 });
+
+function extractSeasonEpisode(url: string): {
+	season: number;
+	episode: number;
+} {
+	// This regular expression matches URLs that follow the pattern /tv/show-name/season-number-episode-number
+	// It captures the season number and episode number from the URL
+	const match = url.match(/\/tv\/[^/]+\/(\d+)-(\d+)/);
+	if (match) {
+		return {
+			season: parseInt(match[1], 10),
+			episode: parseInt(match[2], 10),
+		};
+	}
+	return { season: 0, episode: 0 };
+}

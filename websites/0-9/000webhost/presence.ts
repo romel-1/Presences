@@ -1,87 +1,120 @@
 const presence = new Presence({
-		clientId: "840489095767261194"
+		clientId: "840489095767261194",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
-let title: HTMLElement, title2: HTMLElement, titleSite: HTMLElement;
-
 presence.on("UpdateData", async () => {
-	const presenceData: PresenceData = {
-			largeImageKey: "logo",
-			startTimestamp: browsingTimestamp
-		},
-		page = window.location.pathname,
-		buttons = await presence.getSetting<boolean>("buttons");
+	let presenceData: PresenceData = {
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/0-9/000webhost/assets/logo.png",
+		startTimestamp: browsingTimestamp,
+	};
+	const { href, pathname } = document.location,
+		[privacy, buttons] = await Promise.all([
+			presence.getSetting<boolean>("privacy"),
+			presence.getSetting<boolean>("buttons"),
+		]),
+		titleSite = document.querySelector(".current-website");
 
-	titleSite = document.querySelector(
-		"#nav-container > div > div.sidebar__header.flex.flex-col > a.sidebar-header__app-link.text-color-white.text-bold.disabled-link.sidebar-header__app-link--disabled > span"
-	);
-	if (titleSite) presenceData.state = titleSite.textContent;
-	if (page === "/") presenceData.details = "Viewing the Homepage";
-	else if (page.includes("/forum")) {
-		if (page.includes("/t/")) {
-			title = document.querySelector("head > title");
-			title2 = document.querySelector(
-				"#suggested-topics > h3.suggested-topics-message > a.badge-wrapper.box > span.badge-category.clear-badge > span"
-			);
-			presenceData.details = "Reading Forum Post:";
-			presenceData.state = title.textContent.replace(
-				`- ${title2.textContent} - 000webhost forum`,
-				""
-			);
-			if (buttons) {
-				presenceData.buttons = [
-					{
-						label: "View Forum Post",
-						url: document.location.href
-					}
-				];
+	switch (true) {
+		case pathname === "/": {
+			presenceData.details = "Viewing the Homepage";
+			break;
+		}
+		case pathname.includes("/forum"): {
+			switch (true) {
+				case pathname.includes("/t/"): {
+					presenceData.details = "Reading forum post:";
+					presenceData.state = document
+						.querySelector("head > title")
+						?.textContent?.replace(
+							`- ${
+								document.querySelector(".fancy-title")?.textContent
+							} - 000webhost forum`,
+							""
+						);
+					presenceData.smallImageKey = Assets.Reading;
+					presenceData.buttons = [
+						{
+							label: "View Forum Post",
+							url: href,
+						},
+					];
+					break;
+				}
+				case pathname.includes("/c/"): {
+					presenceData.details = "Browsing through forum category:";
+					presenceData.state =
+						document.querySelector(".category-name")?.textContent;
+					presenceData.buttons = [
+						{
+							label: "View Forum Category",
+							url: href,
+						},
+					];
+					break;
+				}
+				case pathname.includes("/u/"): {
+					presenceData.details = `Viewing ${
+						document.querySelector(".username")?.textContent
+					}'s profile`;
+					presenceData.buttons = [
+						{
+							label: "View Profile",
+							url: href,
+						},
+					];
+					break;
+				}
+				default: {
+					presenceData.details = "Browsing through the forum";
+					break;
+				}
 			}
-		} else if (page.includes("/c/")) {
-			title = document.querySelector("head > title");
-			presenceData.details = "Browsing through Forum Category:";
-			presenceData.state = title.textContent
-				.replace(" topics - 000webhost forum", "")
-				.replace("Latest", "");
-			if (buttons) {
-				presenceData.buttons = [
-					{
-						label: "View Forum Category",
-						url: document.location.href
-					}
-				];
+			break;
+		}
+		default: {
+			const pages: Record<string, PresenceData> = {
+				"/cheap-web-hosting": { details: "Viewing webhosting" },
+				"members/website/list": { details: "Viewing All Websites" },
+				"/members/store": { details: "Viewing the store" },
+				"/build": { details: "Managing website:" },
+				"/domain": { details: "Managing domains for:" },
+				"/files": { details: "Managing files for:" },
+				"/database": { details: "Managing databases for:" },
+				"/email": { details: "Managing emails for:" },
+				"/settings": { details: "Managing settings for:" },
+				"/stats": { details: "Viewing stats for:" },
+				"/security": { details: "Managing security settings for:" },
+				"/cron-jobs": { details: "Managing cron-jobs for:" },
+				"/redirect": { details: "Managing redirects for:" },
+				"/logs": { details: "Viewing logs for:" },
+				"/backup": { details: "Managing backups for:" },
+				"/store": { details: "Viewing the power store" },
+			};
+
+			for (const [path, data] of Object.entries(pages)) {
+				if (pathname.includes(path))
+					presenceData = { ...presenceData, ...data };
 			}
-		} else presenceData.details = "Browsing Through The Forum";
-	} else if (page.includes("/free-website-sign-up"))
-		presenceData.details = "Signing up";
-	else if (page.includes("members/website/list"))
-		presenceData.details = "Viewing All Websites";
-	else if (page.includes("/members/store"))
-		presenceData.details = "Viewing the Store";
-	else if (page.endsWith("/build") && titleSite) {
-		presenceData.details = "Managing Website:";
+
+			if (!presenceData.details) {
+				presenceData.details = `Managing ${
+					document
+						.querySelector(".dashboard-sidemenu")
+						.shadowRoot.querySelector('[class*="item--active"]')?.textContent
+				} settings for:`;
+			}
+		}
+	}
+
+	if (titleSite && !privacy && !presenceData.state)
 		presenceData.state = titleSite.textContent;
-	} else if (page.endsWith("/domain") && titleSite)
-		presenceData.details = "Managing Domains For:";
-	else if (page.endsWith("/files"))
-		presenceData.details = "Managing Files For:";
-	else if (page.endsWith("/database"))
-		presenceData.details = "Managing Database For:";
-	else if (page.endsWith("/email"))
-		presenceData.details = "Managing Email For:";
-	else if (page.endsWith("/settings"))
-		presenceData.details = "Managing Settings For:";
-	else if (page.endsWith("/stats")) presenceData.details = "Viewing Stats For:";
-	else if (page.endsWith("/security"))
-		presenceData.details = "Managing Security Settings For:";
-	else if (page.endsWith("/cron-jobs"))
-		presenceData.details = "Managing Cron-Jobs For:";
-	else if (page.endsWith("/redirect"))
-		presenceData.details = "Managing Redirects For:";
-	else if (page.endsWith("/logs")) presenceData.details = "Viewing Logs For:";
-	else if (page.endsWith("/backup"))
-		presenceData.details = "Managing Backups For:";
 
+	if (presenceData.state && privacy) delete presenceData.state;
+
+	if ((!buttons || privacy) && presenceData.buttons)
+		delete presenceData.buttons;
 	if (presenceData.details) presence.setActivity(presenceData);
 	else presence.setActivity();
 });

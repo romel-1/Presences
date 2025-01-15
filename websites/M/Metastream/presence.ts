@@ -1,10 +1,10 @@
 const presence = new Presence({
-		clientId: "630462023003799583"
+		clientId: "630462023003799583",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		live: "presence.activity.live"
+		play: "general.playing",
+		pause: "general.paused",
+		live: "general.live",
 	});
 
 function getTime(list: string[]): number {
@@ -21,7 +21,7 @@ function getTimestamps(audioTime: string, audioDuration: string): number[] {
 		Math.floor(startTime / 1000),
 		Math.floor(startTime / 1000) -
 			getTime(audioTime.split(":").reverse()) +
-			getTime(audioDuration.split(":").reverse())
+			getTime(audioDuration.split(":").reverse()),
 	];
 }
 
@@ -75,7 +75,7 @@ presence.on("UpdateData", async () => {
 				} else if (document.querySelector(".MenuHeader__header__1SYq0"))
 					details = "Setting up...";
 				else {
-					smallImageKey = "live";
+					smallImageKey = Assets.Live;
 					smallImageText = (await strings).live;
 
 					const users =
@@ -111,11 +111,11 @@ presence.on("UpdateData", async () => {
 						);
 						if (play) {
 							if (play.href.baseVal.endsWith("pause")) {
-								smallImageKey = "play";
+								smallImageKey = Assets.Play;
 								smallImageText = (await strings).play;
 								playing = true;
 							} else {
-								smallImageKey = "pause";
+								smallImageKey = Assets.Pause;
 								smallImageText = (await strings).pause;
 								playing = false;
 							}
@@ -132,11 +132,12 @@ presence.on("UpdateData", async () => {
 		{
 			details,
 			state,
-			largeImageKey: "metastream",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/M/Metastream/assets/logo.png",
 			smallImageKey,
 			smallImageText,
 			startTimestamp,
-			endTimestamp
+			endTimestamp,
 		},
 		playing
 	);

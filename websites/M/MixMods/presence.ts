@@ -1,21 +1,27 @@
 const presence = new Presence({
-	clientId: "706574162331697163"
+	clientId: "706574162331697163",
 });
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "logo"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/M/MixMods/assets/logo.png",
 	};
 
 	if (document.location.pathname === "/") {
 		presenceData.details = "Na página inicial...";
 
-		presenceData.smallImageKey = "logo";
+		presenceData.smallImageKey =
+			"https://cdn.rcd.gg/PreMiD/websites/M/MixMods/assets/logo.png";
 		presenceData.smallImageText = "www.mixmods.com.br";
 	} else if (document.location.pathname.match("/search/label")) {
-		const [url] = document.location.href.split("/label/")[1].split("?&max");
 		presenceData.details = "Visualizando categoria:";
-		presenceData.state = decodeURI(url.split("?&max")[0]);
+		presenceData.state = decodeURI(
+			document.location.href
+				.split("/label/")[1]
+				.split("?&max")[0]
+				.split("?&max")[0]
+		);
 	} else if (document.location.pathname.startsWith("/p")) {
 		switch (document.location.pathname) {
 			case "/p/about.html":
@@ -39,20 +45,21 @@ presence.on("UpdateData", async () => {
 
 				break;
 		}
-	} else if (document.getElementsByClassName("label-info breadcrumbs")[0]) {
+	} else if (document.querySelectorAll(".label-info.breadcrumbs")[0]) {
 		presenceData.details = "Visualizando um post:";
-		presenceData.state = document.getElementsByClassName(
-			"post-title entry-title"
+		presenceData.state = document.querySelectorAll(
+			".post-title.entry-title"
 		)[0].textContent;
 
-		presenceData.smallImageKey = "user";
 		presenceData.smallImageText = `Postado por Junior_Djjr em ${
 			document.querySelector("[itemprop=datePublished]").textContent
 		}`;
 	} else {
 		presenceData.details = "Navegando no site";
-		const [, url] = document.location.href.split("#");
-		presenceData.state = `Página ${url.split("=")[1]}`;
+
+		presenceData.state = `Página ${
+			document.location.href.split("#")[1].split("=")[1]
+		}`;
 	}
 
 	presence.setActivity(presenceData);

@@ -1,5 +1,5 @@
 const presence = new Presence({
-	clientId: "733216959382159400"
+	clientId: "733216959382159400",
 });
 
 let currentURL = new URL(document.location.href),
@@ -7,8 +7,9 @@ let currentURL = new URL(document.location.href),
 const browsingTimestamp = Math.floor(Date.now() / 1000);
 let presenceData: PresenceData = {
 	details: "Viewing an unsupported page",
-	largeImageKey: "lg",
-	startTimestamp: browsingTimestamp
+	largeImageKey:
+		"https://cdn.rcd.gg/PreMiD/websites/W/Wikivoyage/assets/logo.png",
+	startTimestamp: browsingTimestamp,
 };
 const updateCallback = {
 		_function: null as () => void,
@@ -20,7 +21,7 @@ const updateCallback = {
 		},
 		get present(): boolean {
 			return this._function !== null;
-		}
+		},
 	},
 	/**
 	 * Initialize/reset presenceData.
@@ -28,8 +29,9 @@ const updateCallback = {
 	resetData = (
 		defaultData: PresenceData = {
 			details: "Viewing an unsupported page",
-			largeImageKey: "lg",
-			startTimestamp: browsingTimestamp
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/W/Wikivoyage/assets/logo.png",
+			startTimestamp: browsingTimestamp,
 		}
 	): void => {
 		currentURL = new URL(document.location.href);
@@ -57,7 +59,7 @@ const updateCallback = {
 					(currentPath[1] === "index.php"
 						? getURLParam("title")
 						: currentPath.slice(1).join("/")
-					).replace(/_/g, " ")
+					).replaceAll("_", " ")
 				);
 			};
 
@@ -97,12 +99,12 @@ const updateCallback = {
 				2301: "Viewing a gadget talk page",
 				2302: "Viewing a gadget definition page",
 				2303: "Viewing a gadget definition talk page",
-				2600: "Viewing a topic"
+				2600: "Viewing a topic",
 			};
 			return (
 				details[
 					[...document.querySelector("body").classList]
-						.filter(v => /ns--?\d/.test(v))[0]
+						.find(v => /ns--?\d/.test(v))
 						.slice(3)
 				] || "Viewing a page"
 			);

@@ -1,36 +1,58 @@
 const presence = new Presence({
-	clientId: "629380028576301093"
+	clientId: "629380028576301093",
 });
+
+const enum Assets {
+	Dblstaff = "https://cdn.rcd.gg/PreMiD/websites/T/top.gg/assets/0.png",
+	Dslregular = "https://cdn.rcd.gg/PreMiD/websites/T/top.gg/assets/1.png",
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/T/top.gg/assets/logo.png",
+}
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "dblregular"
+		largeImageKey: Assets.Logo,
 	};
 	presenceData.details = "Viewing Page:";
 
 	//Discord Bot List
 	if (window.location.pathname.startsWith("/moderation")) {
 		presenceData.details = "Viewing DBL Staff section:";
-		presenceData.largeImageKey = "dblstaff";
+		presenceData.largeImageKey = Assets.Dblstaff;
 
-		if (window.location.pathname === "/moderation") {
-			const personalquota =
-				document.getElementsByClassName("quotaindiv")[0].textContent;
+		switch (window.location.pathname) {
+			case "/moderation": {
+				const personalquota =
+					document.querySelectorAll(".quotaindiv")[0].textContent;
 
-			presenceData.state = `Reviewed ${personalquota.substring(
-				personalquota.indexOf("reviewed") + 9,
-				personalquota.indexOf("/")
-			)} bots this week`;
-		} else if (window.location.pathname === "/moderation/approve")
-			presenceData.state = "Verification Queue";
-		else if (window.location.pathname === "/moderation/certify")
-			presenceData.state = "Certification Queue";
-		else if (window.location.pathname === "/moderation/reports")
-			presenceData.state = "Reports Queue";
-		else if (window.location.pathname === "/moderation/reviews")
-			presenceData.state = "Reviews Dashboard";
-		else if (window.location.pathname.startsWith("/moderation/decline"))
-			presenceData.state = document.querySelector("#botlistitle").textContent;
+				presenceData.state = `Reviewed ${personalquota.substring(
+					personalquota.indexOf("reviewed") + 9,
+					personalquota.indexOf("/")
+				)} bots this week`;
+
+				break;
+			}
+			case "/moderation/approve": {
+				presenceData.state = "Verification Queue";
+				break;
+			}
+			case "/moderation/certify": {
+				presenceData.state = "Certification Queue";
+				break;
+			}
+			case "/moderation/reports": {
+				presenceData.state = "Reports Queue";
+				break;
+			}
+			case "/moderation/reviews": {
+				presenceData.state = "Reviews Dashboard";
+				break;
+			}
+			default:
+				if (window.location.pathname.startsWith("/moderation/decline")) {
+					presenceData.state =
+						document.querySelector("#botlistitle").textContent;
+				}
+		}
 	} else if (window.location.pathname.startsWith("/bot/")) {
 		if (window.location.pathname.endsWith("/edit")) {
 			presenceData.details = "Editing a Discord bot:";
@@ -51,7 +73,7 @@ presence.on("UpdateData", async () => {
 			presenceData.details = `Viewing a Discord bot: ${document
 				.querySelector(".entity-header__name")
 				.textContent.trim()}`;
-			presenceData.largeImageKey = "dblstaff";
+			presenceData.largeImageKey = Assets.Dblstaff;
 			presenceData.state = "Bot isn't approved yet";
 		} else {
 			presenceData.details = "Viewing a Discord bot:";
@@ -81,7 +103,7 @@ presence.on("UpdateData", async () => {
 		presenceData.state = "Discord Bot List API Documentation";
 	//Discord Server List
 	else if (window.location.pathname.startsWith("/servers")) {
-		presenceData.largeImageKey = "dslregular";
+		presenceData.largeImageKey = Assets.Dslregular;
 		if (
 			window.location.pathname.startsWith("/servers/list/") ||
 			window.location.pathname.startsWith("/servers/tag/")

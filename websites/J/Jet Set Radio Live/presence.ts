@@ -1,18 +1,14 @@
 const presence = new Presence({
-		clientId: "782853565550034954"
+		clientId: "782853565550034954",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused"
+		play: "general.playing",
+		pause: "general.paused",
 	}),
-	getTimestamps = (videoTime: number, videoDuration: number): number[] => {
-		const startTime = Date.now();
-		return [
-			Math.floor(startTime / 1000),
-			Math.floor(startTime / 1000) - videoTime + videoDuration
-		];
-	},
 	stationIDMap: { [key: string]: string } = {
+		olliolliworld: "OlliOlli World",
+		spacechannel5: "Space Channel 5",
+		live: "Jet Set Radio Live",
 		outerspace: "Outer Space",
 		classic: "Classic",
 		future: "Future",
@@ -36,23 +32,32 @@ const presence = new Presence({
 		silvagunner: "SilvaGunner x JSR",
 		futuregeneration: "Future Generation",
 		jetmashradio: "Jet Mash Radio",
+		memoriesoftokyoto: "Memories of Tokyo-to",
+		tokyotofuture: "Sounds of Tokyo-to Future",
 		crazytaxi: "Crazy Taxi",
 		ollieking: "Ollie King",
 		toejamandearl: "Toe Jam & Earl",
 		hover: "Hover",
 		butterflies: "Butterflies",
+		lethalleagueblaze: "Lethal League Blaze",
 		bonafidebloom: "BonafideBloom",
 		djchidow: "DJ Chidow",
 		verafx: "VeraFX",
 		summer: "Summer",
 		halloween: "Halloween",
 		christmas: "Christmas",
-		snowfi: "Snow-Fi"
+		snowfi: "Snow-Fi",
+		brc: "Bomb Rush Cyberfunk",
+		elaquent: "Elaquent",
+		turntablism: "Turntablism",
+		sonicrush: "Sonic Rush",
 	};
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "jsrl"
+			type: ActivityType.Listening,
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/J/Jet%20Set%20Radio%20Live/assets/logo.png",
 		},
 		audio = document.querySelector<HTMLAudioElement>("#audioPlayer"),
 		songName = document.querySelector(
@@ -60,34 +65,33 @@ presence.on("UpdateData", async () => {
 		),
 		buttons = await presence.getSetting<boolean>("buttons");
 
-	if (songName.textContent.length < 1 || !audio) {
+	if (songName.textContent.length < 1 || !audio)
 		presenceData.details = "Not tuned in.";
-		presenceData.smallImageKey = "pause";
-		presenceData.smallImageText = (await strings).pause;
-	} else {
-		const [, , , , , stationID] = document
-			.querySelector<HTMLImageElement>("#graffitiSoul")
-			.src.split("/");
-		presenceData.largeImageKey = stationID;
-		presenceData.state = stationIDMap[stationID];
+	else {
+		const stationImage =
+				document.querySelector<HTMLImageElement>("#graffitiSoul").src,
+			stationName = stationIDMap[stationImage.split("/")[5]];
+		presenceData.largeImageKey = stationImage;
+		if (stationName) presenceData.state = stationName;
+
 		if (
 			!audio.paused &&
 			!document.querySelector('#loadingTrackCircle:not([style*="hidden"])')
 		) {
 			if (await presence.getSetting<boolean>("song"))
 				presenceData.details = songName.textContent;
-			if (await presence.getSetting<boolean>("timestamp")) {
+			if (
+				(await presence.getSetting<boolean>("timestamp")) &&
+				isFinite(audio.duration)
+			) {
 				[presenceData.startTimestamp, presenceData.endTimestamp] =
-					getTimestamps(
-						Math.floor(audio.currentTime),
-						Math.floor(audio.duration)
-					);
+					presence.getTimestampsfromMedia(audio);
 			}
-			presenceData.smallImageKey = "play";
+			presenceData.smallImageKey = Assets.Play;
 			presenceData.smallImageText = (await strings).play;
 		} else {
 			presenceData.details = "Paused";
-			presenceData.smallImageKey = "pause";
+			presenceData.smallImageKey = Assets.Pause;
 			presenceData.smallImageText = (await strings).pause;
 		}
 
@@ -95,8 +99,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "Tune In",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	}

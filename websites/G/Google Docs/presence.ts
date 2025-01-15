@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "630478614894477337"
+		clientId: "630478614894477337",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
@@ -8,18 +8,18 @@ let title: string;
 async function getStrings() {
 	return presence.getStrings(
 		{
-			editingDoc: "google docs.editingDoc",
-			viewingDoc: "google docs.viewingDoc",
-			browsingDoc: "google docs.browsingDoc",
-			editingForm: "google docs.editingForm",
-			viewingForm: "google docs.viewingForm",
-			browsingForm: "google docs.browsingForm",
-			editingSheet: "google docs.editingSheet",
-			viewingSheet: "google docs.viewingSheet",
-			browsingSheet: "google docs.browsingSheet",
-			editingPresentation: "google docs.editingPresentation",
-			browsingPresentation: "google docs.browsingPresentation",
-			vieiwngPresentation: "google docs.viewingPresentation"
+			editingDoc: "googledocs.editingDoc",
+			viewingDoc: "googledocs.viewingDoc",
+			browsingDoc: "googledocs.browsingDoc",
+			editingForm: "googledocs.editingForm",
+			viewingForm: "googledocs.viewingForm",
+			browsingForm: "googledocs.browsingForm",
+			editingSheet: "googledocs.editingSheet",
+			viewingSheet: "googledocs.viewingSheet",
+			browsingSheet: "googledocs.browsingSheet",
+			editingPresentation: "googledocs.editingPresentation",
+			browsingPresentation: "googledocs.browsingPresentation",
+			vieiwngPresentation: "googledocs.viewingPresentation",
 		},
 		await presence.getSetting<string>("lang").catch(() => "en")
 	);
@@ -28,9 +28,16 @@ async function getStrings() {
 let strings: Awaited<ReturnType<typeof getStrings>>,
 	oldLang: string = null;
 
+const enum Assets {
+	DocsLogo = "https://cdn.rcd.gg/PreMiD/websites/G/Google%20Docs/assets/0.png",
+	FormsLogo = "https://cdn.rcd.gg/PreMiD/websites/G/Google%20Docs/assets/1.png",
+	SheetsLogo = "https://cdn.rcd.gg/PreMiD/websites/G/Google%20Docs/assets/2.png",
+	SlidesLogo = "https://cdn.rcd.gg/PreMiD/websites/G/Google%20Docs/assets/3.png",
+}
+
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			startTimestamp: browsingTimestamp
+			startTimestamp: browsingTimestamp,
 		},
 		privacy = await presence.getSetting<boolean>("privacy"),
 		newLang = await presence.getSetting<string>("lang").catch(() => "en");
@@ -47,33 +54,33 @@ presence.on("UpdateData", async () => {
 		.replace("- Google Slides", "");
 
 	if (document.location.pathname.includes("/document")) {
-		presenceData.largeImageKey = "docslogo";
+		presenceData.largeImageKey = Assets.DocsLogo;
 		if (document.location.pathname.includes("/edit"))
-			presenceData.details = (await strings).editingDoc;
+			presenceData.details = strings.editingDoc;
 		else if (document.location.pathname.includes("/document/u/"))
-			presenceData.details = (await strings).browsingDoc;
-		else presenceData.details = (await strings).viewingDoc;
+			presenceData.details = strings.browsingDoc;
+		else presenceData.details = strings.viewingDoc;
 	} else if (document.location.pathname.includes("/forms/")) {
-		presenceData.largeImageKey = "formslogo";
+		presenceData.largeImageKey = Assets.FormsLogo;
 		if (document.location.pathname.includes("/edit"))
-			presenceData.details = (await strings).editingForm;
+			presenceData.details = strings.editingForm;
 		else if (document.location.pathname.includes("/forms/u/"))
-			presenceData.details = (await strings).browsingForm;
-		else presenceData.details = (await strings).viewingForm;
+			presenceData.details = strings.browsingForm;
+		else presenceData.details = strings.viewingForm;
 	} else if (document.location.pathname.includes("/spreadsheets")) {
-		presenceData.largeImageKey = "sheetslogo";
+		presenceData.largeImageKey = Assets.SheetsLogo;
 		if (document.location.pathname.includes("/edit"))
-			presenceData.details = (await strings).editingSheet;
+			presenceData.details = strings.editingSheet;
 		else if (document.location.pathname.includes("/spreadsheets/u/"))
-			presenceData.details = (await strings).browsingSheet;
-		else presenceData.details = (await strings).viewingSheet;
+			presenceData.details = strings.browsingSheet;
+		else presenceData.details = strings.viewingSheet;
 	} else if (document.location.pathname.includes("/presentation/")) {
-		presenceData.largeImageKey = "slideslogo";
+		presenceData.largeImageKey = Assets.SlidesLogo;
 		if (document.location.pathname.includes("/edit"))
-			presenceData.details = (await strings).editingPresentation;
+			presenceData.details = strings.editingPresentation;
 		else if (document.location.pathname.includes("/presentation/u/"))
-			presenceData.details = (await strings).browsingPresentation;
-		else presenceData.details = (await strings).vieiwngPresentation;
+			presenceData.details = strings.browsingPresentation;
+		else presenceData.details = strings.vieiwngPresentation;
 	}
 
 	if (!privacy) presenceData.state = title;

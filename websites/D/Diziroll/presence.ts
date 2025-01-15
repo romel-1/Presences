@@ -10,7 +10,10 @@ presence.on(
 
 presence.on("UpdateData", async () => {
 	const path: string = document.location.pathname,
-		presenceData: PresenceData = { largeImageKey: "diziroll" };
+		presenceData: PresenceData = {
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/D/Diziroll/assets/logo.png",
+		};
 	presenceData.startTimestamp = Date.now();
 	if (path.startsWith("/arsiv")) {
 		presenceData.details = "Bir sayfaya bakıyor:";
@@ -24,24 +27,22 @@ presence.on("UpdateData", async () => {
 	} else if (path === "/") {
 		presenceData.details = "Bir sayfaya bakıyor:";
 		presenceData.state = "Ana Sayfa";
-	} else if (document.getElementById("archive-page")) {
+	} else if (document.querySelector("#archive-page")) {
 		presenceData.details = "Bir dizi türünü inceliyor: ";
 		presenceData.state = document.querySelector("div.title").textContent;
-	} else if (document.getElementById("series-page")) {
+	} else if (document.querySelector("#series-page")) {
 		presenceData.details = "Bir diziyi inceliyor:";
 		presenceData.state = document.querySelector("div.top > h1").textContent;
-	} else if (document.getElementsByClassName("episode-detail").length > 0) {
+	} else if (document.querySelectorAll(".episode-detail").length > 0) {
 		presenceData.details =
-			(document.getElementsByClassName("series-name")[0] as HTMLElement)
-				.title || "Bulunamadı";
+			document.querySelectorAll<HTMLElement>(".series-name")[0].title ||
+			"Bulunamadı";
 		presenceData.state = `${
-			document.querySelector("div.select-season > a").textContent
-				? document.querySelector("div.select-season > a").textContent
-				: "Bulunamadı"
+			document.querySelector("div.select-season > a").textContent ??
+			"Bulunamadı"
 		}- ${
-			document.querySelector("div.select-episode > a").textContent
-				? document.querySelector("div.select-episode > a").textContent
-				: "Bulunamadı"
+			document.querySelector("div.select-episode > a").textContent ??
+			"Bulunamadı"
 		}`;
 		presenceData.buttons = [
 			{ label: "İzle", url: document.location.href },
@@ -49,10 +50,10 @@ presence.on("UpdateData", async () => {
 				label: "Diziyi Görüntüle",
 				url: `${document.location.origin}/${
 					document.location.pathname.split("/")[1]
-				}`
-			}
+				}`,
+			},
 		];
-		presenceData.smallImageKey = stream.paused ? "pause" : "play";
+		presenceData.smallImageKey = stream.paused ? Assets.Pause : Assets.Play;
 		presenceData.smallImageText = stream.paused ? "Durduruldu" : "Oynatılıyor";
 		if (!stream.paused) {
 			[presenceData.startTimestamp, presenceData.endTimestamp] =

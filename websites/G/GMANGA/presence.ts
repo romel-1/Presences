@@ -11,27 +11,22 @@ interface Route extends Functionlize<Partial<PresenceData>> {
 enum Settings {
 	TIMESTAMP = "timestamp",
 	BUTTONS = "buttons",
-	LOGO = "logo"
+	LOGO = "logo",
 }
 
-enum Icons {
-	NEWS = "news",
-	TEAM = "team",
-	MANGA = "manga",
-	READING = "reading",
-	LIBRARY = "library",
-	SEARCHING = "searching",
-	DISCOVERY = "discovery",
-	PAINTINGS = "paintings"
-}
-
-enum Logos {
-	LIGHT = "light-logo",
-	DARK = "dark-logo"
+const enum Assets {
+	Discovery = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/0.png",
+	Library = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/1.png",
+	Team = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/2.png",
+	Manga = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/3.png",
+	News = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/4.png",
+	Paintings = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/5.png",
+	DarkLogo = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/6.png",
+	LightLogo = "https://cdn.rcd.gg/PreMiD/websites/G/GMANGA/assets/7.png",
 }
 
 const presence = new Presence({
-		clientId: "862700890414776370"
+		clientId: "862700890414776370",
 	}),
 	AVERAGE_READING_TIME = 12000,
 	searchInput = document.querySelector("#quickSearch"),
@@ -41,10 +36,10 @@ const presence = new Presence({
 			{ path: /^\/$/, details: () => "On Homepage" },
 			{
 				path: /^\/(mangas|mangas\/featured|mangas\/latest|)$/,
-				smallImageKey: () => Icons.DISCOVERY,
+				smallImageKey: () => Assets.Discovery,
 				smallImageText: () => "Browsing",
 				details: () => "Browsing for Manga",
-				buttons: () => [{ label: "Browse", url: location.href }]
+				buttons: () => [{ label: "Browse", url: location.href }],
 			},
 			{
 				path: /^\/mangas\/\d+\/(.*)+\/[0-9.]+\/(.*)$/,
@@ -61,7 +56,7 @@ const presence = new Presence({
 					return data;
 				},
 				playback: () => !!data.endTimestamp,
-				smallImageKey: () => Icons.READING,
+				smallImageKey: () => Assets.Reading,
 				smallImageText: () => "Reading",
 				state: () => document.querySelector(".white-link").textContent,
 				details: () =>
@@ -74,15 +69,15 @@ const presence = new Presence({
 						label: "Manga Page",
 						url: `https://${location.hostname}${document
 							.querySelector(".white-link")
-							.getAttribute("href")}`
-					}
-				]
+							.getAttribute("href")}`,
+					},
+				],
 			},
 			{
 				path: /^\/mangas\/\d+\/(.*)+$/,
 				details: () => "Viewing a manga",
 				state: () => document.querySelector("h1.header").textContent,
-				smallImageKey: () => Icons.MANGA,
+				smallImageKey: () => Assets.Manga,
 				smallImageText: () => "Viewing",
 				buttons: () => [
 					{ label: "View Manga", url: location.href },
@@ -90,45 +85,45 @@ const presence = new Presence({
 						label: "Last Chapter",
 						url: `https://${location.hostname}${document
 							.querySelector("a.primary.button")
-							?.getAttribute("href")}`
-					}
-				]
+							?.getAttribute("href")}`,
+					},
+				],
 			},
 			{
 				path: /^\/news+/,
-				smallImageKey: () => Icons.NEWS,
+				smallImageKey: () => Assets.News,
 				smallImageText: () => "Reading",
 				details: () => "Reading News",
 				state: () => document.querySelector("h1.header")?.textContent,
-				buttons: () => [{ label: "Read News", url: location.href }]
+				buttons: () => [{ label: "Read News", url: location.href }],
 			},
 			{
 				path: /\/colorings$/,
-				smallImageKey: () => Icons.PAINTINGS,
+				smallImageKey: () => Assets.Paintings,
 				smallImageText: () => "Viewing",
 				details: () => "Viewing Paintings",
 				state: () =>
 					document
 						.querySelector("h1.header")
 						.textContent.replace("تلوينات ", ""),
-				buttons: () => [{ label: "View Paintings", url: location.href }]
+				buttons: () => [{ label: "View Paintings", url: location.href }],
 			},
 			{
 				path: /^\/teams/,
-				smallImageKey: () => Icons.TEAM,
+				smallImageKey: () => Assets.Team,
 				smallImageText: () => "Viewing",
 				details: () => "Viewing a Team",
 				state: () => document.querySelector("h2.header").textContent,
-				buttons: () => [{ label: "View Team", url: location.href }]
+				buttons: () => [{ label: "View Team", url: location.href }],
 			},
 			{
 				path: /^\/members/,
-				smallImageKey: () => Icons.LIBRARY,
+				smallImageKey: () => Assets.Library,
 				smallImageText: () => "Viewing",
 				details: () => "Viewing a User",
 				state: () => document.querySelector("h2.header").textContent,
-				buttons: () => [{ label: "View User", url: location.href }]
-			}
+				buttons: () => [{ label: "View User", url: location.href }],
+			},
 		];
 
 		return routes.find(route => route.path.test(path));
@@ -143,7 +138,7 @@ if (searchInput) {
 			return;
 		}
 
-		searchData.smallImageKey = Icons.SEARCHING;
+		searchData.smallImageKey = Assets.Search;
 		searchData.smallImageText = "Searching";
 		searchData.state = `Searching: ${this.textContent}`;
 	});
@@ -154,14 +149,15 @@ presence.on("UpdateData", async () => {
 		showButtons = await presence.getSetting<boolean>(Settings.BUTTONS),
 		logo = await presence.getSetting<number>(Settings.LOGO);
 	let presenceData: PresenceData = {
-		largeImageKey: [Logos.LIGHT, Logos.DARK][logo] || Logos.LIGHT
+		largeImageKey:
+			[Assets.LightLogo, Assets.DarkLogo][logo] || Assets.LightLogo,
 	};
 
 	if (showTimestamp) presenceData.startTimestamp = startTimestamp;
 
 	const route = router({
 		data: presenceData,
-		path: location.href.replace(`https://${location.hostname}`, "")
+		path: location.href.replace(`https://${location.hostname}`, ""),
 	});
 
 	if (!route) return presence.setActivity(presenceData);

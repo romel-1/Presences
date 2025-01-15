@@ -1,9 +1,9 @@
 const presence = new Presence({
-		clientId: "787715073007026187"
+		clientId: "787715073007026187",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused"
+		play: "general.playing",
+		pause: "general.paused",
 	});
 
 let lastPlaybackState: boolean,
@@ -12,12 +12,13 @@ let lastPlaybackState: boolean,
 
 presence.on("UpdateData", async () => {
 	const playback =
-			!!document.getElementById("title") ||
-			(document.getElementsByTagName("video").length &&
-				document.getElementsByTagName("video")[0].className !== "previewVideo"),
+			!!document.querySelector("#title") ||
+			(document.querySelectorAll("video").length &&
+				document.querySelectorAll("video")[0].className !== "previewVideo"),
 		curPath = document.location.pathname,
 		presenceData: PresenceData = {
-			largeImageKey: "logo"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/Y/Yoake/assets/logo.png",
 		};
 
 	if (lastPath !== curPath || lastPlaybackState !== playback) {
@@ -27,7 +28,7 @@ presence.on("UpdateData", async () => {
 	}
 	if (!playback) {
 		if (curPath.startsWith("/entity.php")) {
-			presenceData.details = document.getElementById("entityTitle").textContent;
+			presenceData.details = document.querySelector("#entityTitle").textContent;
 			presenceData.state = "Đang chọn tập...";
 		} else if (curPath.startsWith("/profile.php"))
 			presenceData.details = "Đang xem profile...";
@@ -62,24 +63,23 @@ presence.on("UpdateData", async () => {
 		return;
 	}
 
-	const [video] = document.getElementsByTagName("video");
+	const [video] = document.querySelectorAll("video");
 
 	if (video && !isNaN(video.duration)) {
 		const [titleArrOne, titleArrTwo] = (
-				document.getElementById("title")
-					? document.getElementById("title").textContent
-					: "Không thấy tên phim!... - Tập ?"
-			).split(" - "),
-			[startTimestamp, endTimestamp] = presence.getTimestamps(
-				Math.floor(video.currentTime),
-				Math.floor(video.duration)
-			);
-		presenceData.smallImageKey = video.paused ? "pause" : "play";
+			document.querySelector("#title")
+				? document.querySelector("#title").textContent
+				: "Không thấy tên phim!... - Tập ?"
+		).split(" - ");
+		presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play;
 		presenceData.smallImageText = video.paused
 			? (await strings).pause
 			: (await strings).play;
-		presenceData.startTimestamp = startTimestamp;
-		presenceData.endTimestamp = endTimestamp;
+		[presenceData.startTimestamp, presenceData.endTimestamp] =
+			presence.getTimestamps(
+				Math.floor(video.currentTime),
+				Math.floor(video.duration)
+			);
 
 		presenceData.details = `Đang xem: ${titleArrOne}`;
 		presenceData.state = titleArrTwo;

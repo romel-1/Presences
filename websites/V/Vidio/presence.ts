@@ -1,9 +1,9 @@
 const presence = new Presence({
-		clientId: "795564487910227968"
+		clientId: "795564487910227968",
 	}),
 	presenceData: PresenceData = {
-		largeImageKey: "vidio",
-		startTimestamp: Math.floor(Date.now() / 1000)
+		largeImageKey: "https://cdn.rcd.gg/PreMiD/websites/V/Vidio/assets/logo.png",
+		startTimestamp: Math.floor(Date.now() / 1000),
 	};
 
 presence.on("UpdateData", async () => {
@@ -23,7 +23,7 @@ presence.on("UpdateData", async () => {
 			presenceData.details = "Viewing live streaming video";
 			break;
 		case "/search":
-			presenceData.smallImageKey = "search";
+			presenceData.smallImageKey = Assets.Search;
 			presenceData.details = "Searching for";
 			presenceData.state = (
 				document.querySelector("#q") as HTMLInputElement
@@ -74,10 +74,10 @@ presence.on("UpdateData", async () => {
 					if (video.paused) {
 						delete presenceData.startTimestamp;
 						delete presenceData.endTimestamp;
-						presenceData.smallImageKey = "pause";
+						presenceData.smallImageKey = Assets.Pause;
 						presenceData.smallImageText = "Video Paused";
 					} else {
-						presenceData.smallImageKey = "play";
+						presenceData.smallImageKey = Assets.Play;
 						presenceData.smallImageText = "Playing";
 					}
 				}
@@ -87,17 +87,17 @@ presence.on("UpdateData", async () => {
 					"#livestreaming-player__player_html5_api"
 				) as HTMLVideoElement;
 				if (video) {
-					presenceData.details = document.getElementsByClassName(
-						"b-livestreaming-detail__title section__title"
+					presenceData.details = document.querySelectorAll(
+						".b-livestreaming-detail__title.section__title"
 					)[1].textContent;
 					presenceData.state = document.querySelector(
 						".b-livestreaming-user__name"
 					).textContent;
 					if (video.paused) {
-						presenceData.smallImageKey = "pause";
+						presenceData.smallImageKey = Assets.Pause;
 						presenceData.smallImageText = "Live Paused";
 					} else {
-						presenceData.smallImageKey = "live";
+						presenceData.smallImageKey = Assets.Live;
 						presenceData.smallImageText = "Playing";
 					}
 				}

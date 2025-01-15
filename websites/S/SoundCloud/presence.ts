@@ -1,14 +1,13 @@
 const presence = new Presence({
-		clientId: "802958833214423081"
+		clientId: "802958833214423081",
 	}),
 	getStrings = async () => {
 		return presence.getStrings(
 			{
-				play: "general.playing",
 				pause: "general.paused",
 				browse: "general.browsing",
 				search: "general.searchSomething",
-				listen: "general.buttonListenAlong"
+				listen: "general.buttonListenAlong",
 			},
 			await presence.getSetting<string>("lang").catch(() => "en")
 		);
@@ -36,90 +35,101 @@ let elapsed = Math.floor(Date.now() / 1000),
 const statics = {
 	"/stream/": {
 		details: "Browsing...",
-		state: "Latest Posts"
+		state: "Latest Posts",
 	},
 	"/terms-of-use/": {
 		details: "Viewing...",
-		state: "Terms of Service"
+		state: "Terms of Service",
 	},
 	"/pages/privacy/": {
 		details: "Viewing...",
-		state: "Privacy Policy"
+		state: "Privacy Policy",
 	},
 	"/pages/cookies/": {
 		details: "Viewing...",
-		state: "Cookies Policy"
+		state: "Cookies Policy",
 	},
 	"/pages/copyright/": {
 		details: "Viewing...",
-		state: "Copyright"
+		state: "Copyright",
 	},
 	"/pages/copyright/report": {
 		details: "Viewing...",
-		state: "Report Copyright Infringement"
+		state: "Report Copyright Infringement",
 	},
 	"/pages/contact": {
 		details: "Viewing...",
-		state: "Contact"
+		state: "Contact",
 	},
 	"/imprint/": {
 		details: "Viewing...",
-		state: "Imprint"
+		state: "Imprint",
 	},
 	"/community-guidelines/": {
 		details: "Viewing...",
-		state: "Community Guidelines"
+		state: "Community Guidelines",
 	},
 	"/law-enforcement-guidelines/": {
 		details: "Viewing...",
-		state: "Law Enforcement Guidelines"
+		state: "Law Enforcement Guidelines",
 	},
 	"/network-enforcement-act/": {
 		details: "Viewing...",
-		state: "Network Enforcement Act"
+		state: "Network Enforcement Act",
 	},
 	"/mobile/": {
 		details: "Viewing App...",
-		state: "SoundCloud Mobile"
+		state: "SoundCloud Mobile",
 	},
 	"/mobile/pulse/": {
 		details: "Viewing App...",
-		state: "Pulse"
+		state: "Pulse",
 	},
 	"/notifications/": {
 		details: "Browsing...",
-		state: "Notifications"
+		state: "Notifications",
 	},
 	"/messages/": {
 		details: "Browsing...",
-		state: "Messages"
+		state: "Messages",
 	},
 	"/popular/searches/": {
 		details: "Browsing...",
-		state: "Popular Searches"
+		state: "Popular Searches",
 	},
 	"/people/": {
 		details: "Viewing...",
-		state: "Who to Follow"
+		state: "Who to Follow",
 	},
 	"/upload": {
-		details: "Uploading..."
+		details: "Uploading...",
 	},
 	"/logout": {
-		details: "Logged Out"
-	}
+		details: "Logged Out",
+	},
 };
 
 presence.on("UpdateData", async () => {
 	const path = location.pathname.replace(/\/?$/, "/"),
-		[showBrowsing, showSong, showTimestamps, cover, newLang] =
-			await Promise.all([
-				presence.getSetting<boolean>("browse"),
-				presence.getSetting<boolean>("song"),
-				presence.getSetting<boolean>("timestamp"),
-				presence.getSetting<boolean>("cover"),
-				presence.getSetting<string>("lang").catch(() => "en")
-			]),
+		[
+			showBrowsing,
+			showSong,
+			hidePaused,
+			showTimestamps,
+			showCover,
+			showButtons,
+			usePresenceName,
+			newLang,
+		] = await Promise.all([
+			presence.getSetting<boolean>("browse"),
+			presence.getSetting<boolean>("song"),
+			presence.getSetting<boolean>("hidePaused"),
+			presence.getSetting<boolean>("timestamp"),
+			presence.getSetting<boolean>("cover"),
+			presence.getSetting<boolean>("buttons"),
+			presence.getSetting<boolean>("usePresenceName"),
+			presence.getSetting<string>("lang").catch(() => "en"),
+		]),
 		playing = Boolean(document.querySelector(".playControls__play.playing"));
 
 	if (oldLang !== newLang || !strings) {
@@ -127,9 +137,14 @@ presence.on("UpdateData", async () => {
 		strings = await getStrings();
 	}
 
+	if (showSong && hidePaused && !playing && !showBrowsing)
+		return presence.clearActivity();
+
 	let presenceData: PresenceData = {
-		largeImageKey: "soundcloud",
-		startTimestamp: elapsed
+		type: ActivityType.Listening,
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/S/SoundCloud/assets/logo.png",
+		startTimestamp: elapsed,
 	};
 
 	if (document.location.href !== prevUrl) {
@@ -138,10 +153,17 @@ presence.on("UpdateData", async () => {
 	}
 
 	if ((playing || (!playing && !showBrowsing)) && showSong) {
-		presenceData.details = getElement(
-			".playbackSoundBadge__titleLink > span:nth-child(2)"
-		);
-		presenceData.state = getElement(".playbackSoundBadge__lightLink");
+		if (!usePresenceName) {
+			presenceData.details = getElement(
+				".playbackSoundBadge__titleLink > span:nth-child(2)"
+			);
+			presenceData.state = getElement(".playbackSoundBadge__lightLink");
+		} else {
+			presenceData.name = getElement(
+				".playbackSoundBadge__titleLink > span:nth-child(2)"
+			);
+			presenceData.details = getElement(".playbackSoundBadge__lightLink");
+		}
 
 		const timePassed = document.querySelector(
 				"div.playbackTimeline__timePassed > span:nth-child(2)"
@@ -160,22 +182,23 @@ presence.on("UpdateData", async () => {
 							presence.timestampFromFormat(timePassed)
 						);
 					}
-				})()
+				})(),
 			],
-			[startTimestamp, endTimestamp] = presence.getTimestamps(
-				currentTime,
-				duration
-			),
 			pathLinkSong = document
 				.querySelector(
 					"#app > div.playControls.g-z-index-control-bar.m-visible > section > div > div.playControls__elements > div.playControls__soundBadge > div > div.playbackSoundBadge__titleContextContainer > div > a"
 				)
-				.getAttribute("href");
+				?.getAttribute("href");
 
-		presenceData.startTimestamp = startTimestamp;
-		presenceData.endTimestamp = endTimestamp;
+		if (playing) {
+			[presenceData.startTimestamp, presenceData.endTimestamp] =
+				presence.getTimestamps(currentTime, duration);
+		} else {
+			presenceData.smallImageKey = Assets.Pause;
+			presenceData.smallImageText = strings.pause;
+		}
 
-		if (cover) {
+		if (showCover) {
 			presenceData.largeImageKey =
 				document
 					.querySelector<HTMLSpanElement>(
@@ -184,18 +207,16 @@ presence.on("UpdateData", async () => {
 					.style.backgroundImage.match(/"(.*)"/)?.[1]
 					.replace("-t50x50.jpg", "-t500x500.jpg") ?? "soundcloud";
 		}
-		presenceData.smallImageKey = playing ? "play" : "pause";
-		presenceData.smallImageText = strings[playing ? "play" : "pause"];
 
-		presenceData.buttons = [
-			{
-				label: strings.listen,
-				url: `https://soundcloud.com${pathLinkSong}`
-			}
-		];
-	}
-
-	if ((!playing || !showSong) && showBrowsing) {
+		if (showButtons && pathLinkSong) {
+			presenceData.buttons = [
+				{
+					label: strings.listen,
+					url: `https://soundcloud.com${pathLinkSong}`,
+				},
+			];
+		}
+	} else if ((!playing || !showSong) && showBrowsing) {
 		for (const [k, v] of Object.entries(statics))
 			if (path.match(k)) presenceData = { ...presenceData, ...v };
 
@@ -257,15 +278,15 @@ presence.on("UpdateData", async () => {
 		}
 	}
 
-	if (presenceData.details) {
+	if (presenceData.details && typeof presenceData.details === "string") {
 		if (presenceData.details.match("(Browsing|Viewing|Discovering)")) {
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = strings.browse;
 		} else if (presenceData.details.match("(Searching)")) {
-			presenceData.smallImageKey = "search";
+			presenceData.smallImageKey = Assets.Search;
 			presenceData.smallImageText = strings.search;
 		} else if (presenceData.details.match("(Uploading)")) {
-			presenceData.smallImageKey = "uploading";
+			presenceData.smallImageKey = Assets.Uploading;
 			presenceData.smallImageText = "Uploading..."; // no string available
 		} else if (!showTimestamps || (!playing && !showBrowsing)) {
 			delete presenceData.startTimestamp;

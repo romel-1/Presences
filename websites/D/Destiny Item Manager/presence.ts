@@ -1,12 +1,19 @@
 const presence = new Presence({
-		clientId: "811198714726449183"
+		clientId: "811198714726449183",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/D/Destiny%20Item%20Manager/assets/logo.png",
+	GuardianWarlock = "https://cdn.rcd.gg/PreMiD/websites/D/Destiny%20Item%20Manager/assets/0.png",
+	GuardianTitan = "https://cdn.rcd.gg/PreMiD/websites/D/Destiny%20Item%20Manager/assets/1.png",
+	GuardianHunter = "https://cdn.rcd.gg/PreMiD/websites/D/Destiny%20Item%20Manager/assets/2.png",
+}
+
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "logo",
-		startTimestamp: browsingTimestamp
+		largeImageKey: Assets.Logo,
+		startTimestamp: browsingTimestamp,
 	};
 
 	if (window.location.host === "destinyitemmanager.com")
@@ -27,11 +34,22 @@ presence.on("UpdateData", async () => {
 				)
 				.textContent.trim()}`;
 
-			if (guardian === "Titan") presenceData.smallImageKey = "guardian-titan";
-			else if (guardian === "Warlock")
-				presenceData.smallImageKey = "guardian-warlock";
-			else if (guardian === "Hunter")
-				presenceData.smallImageKey = "guardian-hunter";
+			switch (guardian) {
+				case "Titan": {
+					presenceData.smallImageKey = Assets.GuardianTitan;
+					break;
+				}
+				case "Warlock": {
+					presenceData.smallImageKey = Assets.GuardianWarlock;
+					break;
+				}
+				case "Hunter":
+					{
+						presenceData.smallImageKey = Assets.GuardianHunter;
+						// No default
+					}
+					break;
+			}
 		} else if (window.location.pathname.includes("progress"))
 			presenceData.details = "Progress";
 		else if (window.location.pathname.includes("vendors"))

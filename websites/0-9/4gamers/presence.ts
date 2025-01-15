@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "648494004870184981"
+		clientId: "648494004870184981",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
@@ -7,7 +7,8 @@ let title: string;
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "4gamers"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/0-9/4gamers/assets/logo.png",
 	};
 
 	if (document.location.hostname === "www.4gamers.com.tw") {
@@ -15,18 +16,17 @@ presence.on("UpdateData", async () => {
 			presenceData.startTimestamp = browsingTimestamp;
 			presenceData.details = "Viewing home page";
 		} else if (document.location.pathname.includes("/new")) {
-			title =
-				document.getElementsByClassName("news-header-title")[0].textContent;
+			title = document.querySelectorAll(".news-header-title")[0].textContent;
 			presenceData.details = title;
 			presenceData.state = `Category: ${
-				document.getElementsByClassName("news-header-category ")[0].textContent
+				document.querySelectorAll(".news-header-category")[0].textContent
 			}`;
 		} else if (document.location.pathname.includes("magazine")) {
-			title = document.getElementsByClassName("magazine-content-title")[0]
+			title = document.querySelectorAll(".magazine-content-title")[0]
 				.textContent;
 			presenceData.details = title;
 			presenceData.state = `Publish Date: ${
-				document.getElementsByClassName("magazine-content-time")[0].textContent
+				document.querySelectorAll(".magazine-content-time")[0].textContent
 			}`;
 		} else if (document.location.pathname.includes("tournament"))
 			presenceData.details = "賽事專欄";

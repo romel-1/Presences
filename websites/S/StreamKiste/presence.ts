@@ -58,16 +58,14 @@ const pages: PageContext[] = [
 					".single-content.movie .title>h1"
 				)?.textContent;
 				if (frame) {
-					const [startTimestamp, endTimestamp] = context.getTimestamps(
-						frame.currentTime,
-						frame.duration
-					);
 					data.details = strings.playing;
 					data.smallImageKey = frame.paused ? images.PAUSE : images.PLAY;
 					data.smallImageText = `${strings.playing} ${data.state}`;
 					if (!frame.paused) {
-						data.startTimestamp = startTimestamp;
-						data.endTimestamp = endTimestamp;
+						[data.startTimestamp, data.endTimestamp] = context.getTimestamps(
+							frame.currentTime,
+							frame.duration
+						);
 					} else {
 						if (data.startTimestamp) delete data.startTimestamp;
 						if (data.endTimestamp) delete data.endTimestamp;
@@ -84,14 +82,14 @@ const pages: PageContext[] = [
 								{
 									movie: "buttonViewMovie",
 									series: "buttonViewSeries",
-									other: "buttonViewPage"
+									other: "buttonViewPage",
 								}[type]
 							],
-						url: document.location.href
-					}
+						url: document.location.href,
+					},
 				];
 				return data;
-			}
+			},
 		},
 		{
 			middleware: ref => !!ref.location.pathname.match(/^\/(cat)\//i),
@@ -112,7 +110,7 @@ const pages: PageContext[] = [
 
 				data.smallImageKey = images.SEARCH;
 				return data;
-			}
+			},
 		},
 		{
 			middleware: ref => !!ref.location.hostname.match(/streamkiste/i),
@@ -122,34 +120,37 @@ const pages: PageContext[] = [
 				delete data.state;
 				data.smallImageKey = images.BROWSE;
 				return data;
-			}
-		}
+			},
+		},
 	],
 	presence = new Presence({
-		clientId: "825531268581818419"
+		clientId: "825531268581818419",
 	});
 
 let lastPageIndex: number,
 	currentLang: string,
 	localizedStrings: { [key: string]: string },
 	frameData: VideoContext;
+
 const IMAGES = {
-	LOGO: "logox1024",
-	PLAY: "playx1024",
-	PAUSE: "pausex1024",
-	BROWSE: "browsex1024",
-	SEARCH: "searchx1024"
+	LOGO: "https://cdn.rcd.gg/PreMiD/websites/S/StreamKiste/assets/0.png",
+	PLAY: Assets.Play,
+	PAUSE: Assets.Pause,
+	BROWSE: "https://cdn.rcd.gg/PreMiD/websites/S/StreamKiste/assets/1.png",
+	SEARCH: Assets.Search,
 };
+
 presence.on("iFrameData", (data: VideoContext) => {
 	frameData = data;
 });
+
 presence.on("UpdateData", async () => {
-	const newLang = await presence.getSetting<string>("lang");
+	const newLang = await presence.getSetting<string>("lang").catch(() => "en");
 	if (newLang !== currentLang) {
 		currentLang = newLang;
 		localizedStrings = await presence.getStrings(
 			{
-				browsing: "presence.activity.browsing",
+				browsing: "general.browsing",
 				watchingMovie: "general.watchingMovie",
 				watchingSeries: "general.watchingSeries",
 				buttonViewMovie: "general.buttonViewMovie",
@@ -158,7 +159,7 @@ presence.on("UpdateData", async () => {
 				viewGenre: "general.viewGenre",
 				playing: "general.playing",
 				searching: "general.search",
-				searchFor: "general.searchFor"
+				searchFor: "general.searchFor",
 			},
 			newLang
 		);
@@ -172,13 +173,13 @@ presence.on("UpdateData", async () => {
 		context.exec(
 			presence,
 			{
-				largeImageKey: IMAGES.LOGO
+				largeImageKey: IMAGES.LOGO,
 			},
 			{
 				frame: frameData,
 				strings: localizedStrings,
 				query,
-				images: IMAGES
+				images: IMAGES,
 			}
 		)
 	)
@@ -195,7 +196,7 @@ presence.on("UpdateData", async () => {
 			if (!data) {
 				presence.setActivity({
 					largeImageKey: IMAGES.LOGO,
-					state: localizedStrings.browsing
+					state: localizedStrings.browsing,
 				});
 			} else {
 				if (data.details) presence.setActivity(data);

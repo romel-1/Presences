@@ -1,15 +1,16 @@
 const presence = new Presence({
-	clientId: "691534544301457449"
+	clientId: "691534544301457449",
 });
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "logo"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/D/DuckDuckGo/assets/logo.png",
 	};
 
 	// Get search query from HTML form input.
 	function searchQuery(): HTMLInputElement {
-		return document.getElementById("search_form_input") as HTMLInputElement;
+		return document.querySelector("#search_form_input") as HTMLInputElement;
 	}
 
 	// Sets the timestamp.
@@ -43,7 +44,7 @@ presence.on("UpdateData", async () => {
 		presenceData.startTimestamp = setTimestamp();
 	} else if (document.location.href.includes("?q=")) {
 		presenceData.startTimestamp = setTimestamp();
-		presenceData.smallImageKey = "search";
+		presenceData.smallImageKey = Assets.Search;
 
 		if (document.location.href.includes("iaxm=maps"))
 			presenceData.details = await handleFormatting("mapSearch");
@@ -64,9 +65,8 @@ presence.on("UpdateData", async () => {
 		else if (document.location.href.includes("&ia=stock")) {
 			presenceData.details = await handleFormatting(
 				"stockSearch",
-				document
-					.getElementsByClassName("stocks__header")[0]
-					.getElementsByTagName("a")[0].textContent
+				document.querySelectorAll(".stocks__header")[0].querySelectorAll("a")[0]
+					.textContent
 			);
 		} else presenceData.details = await handleFormatting("standardSearch");
 	}

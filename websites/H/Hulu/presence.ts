@@ -1,11 +1,11 @@
 const presence = new Presence({
-		clientId: "607719679011848220"
+		clientId: "607719679011848220",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		live: "presence.activity.live",
-		search: "presence.activity.searching"
+		play: "general.playing",
+		pause: "general.paused",
+		live: "general.live",
+		search: "general.searching",
 	});
 
 function capitalize(text: string): string {
@@ -24,9 +24,7 @@ presence.on("UpdateData", async () => {
 		startTimestamp,
 		endTimestamp;
 
-	const { href } = window.location,
-		path = window.location.pathname;
-
+	const { href, pathname: path } = window.location;
 	if (href !== oldUrl) {
 		oldUrl = href;
 		elapsed = Math.floor(Date.now() / 1000);
@@ -96,7 +94,7 @@ presence.on("UpdateData", async () => {
 	} else if (path.includes("/search")) {
 		const input: HTMLInputElement = document.querySelector(".cu-search-input");
 		details = "Searching";
-		smallImageKey = "search";
+		smallImageKey = Assets.Search;
 		smallImageText = (await strings).search;
 		if (input && input.value.length > 0) state = input.value;
 	} else if (path.includes("/live")) {
@@ -130,7 +128,11 @@ presence.on("UpdateData", async () => {
 			if (content && content.textContent.length > 0)
 				state = content.textContent;
 
-			smallImageKey = live ? "live" : video.paused ? "pause" : "play";
+			smallImageKey = live
+				? Assets.Live
+				: video.paused
+				? Assets.Pause
+				: Assets.Play;
 			smallImageText = live
 				? (await strings).live
 				: video.paused
@@ -161,7 +163,11 @@ presence.on("UpdateData", async () => {
 				if (content && content.textContent.length > 0)
 					state = content.textContent;
 
-				smallImageKey = live ? "live" : video.paused ? "pause" : "play";
+				smallImageKey = live
+					? Assets.Live
+					: video.paused
+					? Assets.Pause
+					: Assets.Play;
 				smallImageText = live
 					? (await strings).live
 					: video.paused
@@ -179,11 +185,12 @@ presence.on("UpdateData", async () => {
 		{
 			details,
 			state,
-			largeImageKey: "hulu",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/H/Hulu/assets/logo.png",
 			smallImageKey,
 			smallImageText,
 			startTimestamp,
-			endTimestamp
+			endTimestamp,
 		},
 		video ? !video.paused : true
 	);

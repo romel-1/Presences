@@ -1,14 +1,15 @@
 const presence = new Presence({
-		clientId: "869131200948756500"
+		clientId: "869131200948756500",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "logo",
-			startTimestamp: browsingTimestamp
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/W/WordProject/assets/logo.png",
+			startTimestamp: browsingTimestamp,
 		},
-		{ pathname } = location,
+		{ pathname, href } = location,
 		buttons = await presence.getSetting<boolean>("buttons");
 
 	if (pathname.startsWith("/index")) {
@@ -23,7 +24,8 @@ presence.on("UpdateData", async () => {
 					presence.timestampFromFormat(e.textContent)
 				);
 
-				[, presenceData.endTimestamp] = presence.getTimestamps(currTS, durTS);
+				[presenceData.startTimestamp, presenceData.endTimestamp] =
+					presence.getTimestamps(currTS, durTS);
 			}
 		}
 	} else if (
@@ -66,15 +68,16 @@ presence.on("UpdateData", async () => {
 					const [timeTS, durTS] = [time, duration].map(e =>
 						presence.timestampFromFormat(e.textContent)
 					);
-					[, presenceData.endTimestamp] = presence.getTimestamps(timeTS, durTS);
+					[presenceData.startTimestamp, presenceData.endTimestamp] =
+						presence.getTimestamps(timeTS, durTS);
 				}
 			}
 			if (buttons) {
 				presenceData.buttons = [
 					{
 						label: "Listen",
-						url: location.href
-					}
+						url: href,
+					},
 				];
 			}
 		}
@@ -105,15 +108,16 @@ presence.on("UpdateData", async () => {
 				const [timeTS, durTS] = [time, duration].map(e =>
 					presence.timestampFromFormat(e.textContent)
 				);
-				[, presenceData.endTimestamp] = presence.getTimestamps(timeTS, durTS);
+				[presenceData.startTimestamp, presenceData.endTimestamp] =
+					presence.getTimestamps(timeTS, durTS);
 			}
 		}
 		if (buttons) {
 			presenceData.buttons = [
 				{
 					label: "Listen",
-					url: location.href
-				}
+					url: href,
+				},
 			];
 		}
 	} else presenceData.details = document.title; // for resources in languages other than English

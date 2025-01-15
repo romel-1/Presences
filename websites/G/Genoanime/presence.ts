@@ -1,9 +1,9 @@
 const presence = new Presence({
-		clientId: "810203651317432351"
+		clientId: "810203651317432351",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused"
+		play: "general.playing",
+		pause: "general.paused",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
@@ -35,8 +35,9 @@ presence.on(
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "genoanime",
-		startTimestamp: browsingTimestamp
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/G/Genoanime/assets/logo.png",
+		startTimestamp: browsingTimestamp,
 	}; //title of the page
 	if (document.location.pathname === "/")
 		presenceData.details = "Exploring Genoanime";
@@ -45,8 +46,8 @@ presence.on("UpdateData", async () => {
 		presenceData.buttons = [
 			{
 				label: "View Library",
-				url: document.location.href
-			}
+				url: document.location.href,
+			},
 		];
 	} else if (document.location.pathname.includes("/details")) {
 		presenceData.details = "Checking Synopsis";
@@ -59,12 +60,12 @@ presence.on("UpdateData", async () => {
 		presenceData.buttons = [
 			{
 				label: "Watch It",
-				url: animeBreadcumb
+				url: animeBreadcumb,
 			},
 			{
 				label: "Check Synopsis",
-				url: document.location.href
-			}
+				url: document.location.href,
+			},
 		];
 	} else if (document.location.pathname.includes("/watch")) {
 		presenceData.details = document.title.slice(0, -13);
@@ -77,31 +78,30 @@ presence.on("UpdateData", async () => {
 		presenceData.buttons = [
 			{
 				label: "Watch Episode",
-				url: document.location.href
+				url: document.location.href,
 			},
 			{
 				label: "Check Synopsis",
-				url: animeBreadcumb
-			}
+				url: animeBreadcumb,
+			},
 		];
 		if (iFrameVideo) {
-			[, presenceData.endTimestamp] = presence.getTimestamps(
-				Math.floor(currentTime),
-				Math.floor(duration)
-			);
+			[presenceData.startTimestamp, presenceData.endTimestamp] =
+				presence.getTimestamps(Math.floor(currentTime), Math.floor(duration));
 		} else {
 			video = document.querySelector("div > div.plyr__video-wrapper > video");
 			if (video) {
 				({ currentTime, duration, paused } = video),
-					([, presenceData.endTimestamp] = presence.getTimestamps(
-						Math.floor(currentTime),
-						Math.floor(duration)
-					));
+					([presenceData.startTimestamp, presenceData.endTimestamp] =
+						presence.getTimestamps(
+							Math.floor(currentTime),
+							Math.floor(duration)
+						));
 			}
 		}
 
 		if (!isNaN(duration)) {
-			presenceData.smallImageKey = paused ? "pause" : "play";
+			presenceData.smallImageKey = paused ? Assets.Pause : Assets.Play;
 			presenceData.smallImageText = paused
 				? (await strings).pause
 				: (await strings).play;
@@ -110,15 +110,15 @@ presence.on("UpdateData", async () => {
 	} else if (document.location.pathname.includes("/search")) {
 		presenceData.details = "Searching For...";
 		presenceData.state = (
-			document.getElementById("search-anime") as HTMLInputElement
+			document.querySelector("#search-anime") as HTMLInputElement
 		).value;
 	} else if (document.location.pathname.includes("/amv")) {
 		presenceData.details = "Watching AMV videos";
 		presenceData.buttons = [
 			{
 				label: "Watch Video",
-				url: document.location.href
-			}
+				url: document.location.href,
+			},
 		];
 	} else if (document.location.pathname.includes("/favorite"))
 		presenceData.details = "Browsing Favourites";
@@ -130,8 +130,8 @@ presence.on("UpdateData", async () => {
 		presenceData.buttons = [
 			{
 				label: "View Schedule",
-				url: document.location.href
-			}
+				url: document.location.href,
+			},
 		];
 	}
 	if (presenceData.details) presence.setActivity(presenceData);

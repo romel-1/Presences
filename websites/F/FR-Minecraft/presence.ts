@@ -1,10 +1,11 @@
 const presence = new Presence({
-	clientId: "810082044284895253"
+	clientId: "810082044284895253",
 });
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "logo"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/F/FR-Minecraft/assets/logo.png",
 		},
 		browsingTimestamp = Math.floor(Date.now() / 1000),
 		privacy = await presence.getSetting<boolean>("privacy"),
@@ -13,7 +14,8 @@ presence.on("UpdateData", async () => {
 	presenceData.startTimestamp = browsingTimestamp;
 	if (privacy) presenceData.details = "Browsing";
 	else if (window.location.pathname.startsWith("/forum")) {
-		presenceData.smallImageKey = "forum";
+		presenceData.smallImageKey =
+			"https://cdn.rcd.gg/PreMiD/websites/F/FR-Minecraft/assets/0.png";
 		if (
 			window.location.pathname.startsWith("/forum/forum-") ||
 			window.location.pathname.startsWith("/forum/topic-") ||
@@ -29,8 +31,8 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "View topic",
-						url: document.URL
-					}
+						url: document.URL,
+					},
 				];
 			}
 		} else if (
@@ -79,8 +81,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View user",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.length === 1) {
@@ -99,8 +101,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View news",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("differents-blocs-jeu.php")) {
@@ -129,8 +131,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: `View ${type}`,
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -153,8 +155,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View mob",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -169,8 +171,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View potion",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("enchantements-minecraft.php")) {
@@ -183,8 +185,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View enchantement",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("biomes-minecraft.php")) {
@@ -197,8 +199,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View biome",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("advancements-minecraft.php")) {
@@ -211,8 +213,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View advancement",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("effets-minecraft.php")) {
@@ -225,8 +227,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View effect",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("astuces.php")) {
@@ -239,8 +241,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View tip",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("seeds.php")) {
@@ -256,8 +258,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View seed",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -272,8 +274,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View command",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("tags-minecraft.php")) {
@@ -286,8 +288,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View tag",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -305,8 +307,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View skin",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("textures.php")) {
@@ -322,8 +324,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View ressource pack",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -341,8 +343,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View mod",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -360,8 +362,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View map",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -379,8 +381,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View datapack",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -398,8 +400,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View structure",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -413,8 +415,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View wallpaper",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (window.location.pathname.includes("videos-minecraft.php")) {
@@ -430,8 +432,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View video",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	} else if (
@@ -454,8 +456,8 @@ presence.on("UpdateData", async () => {
 			presenceData.buttons = [
 				{
 					label: "View FRM Launcher",
-					url: document.URL
-				}
+					url: document.URL,
+				},
 			];
 		}
 	}

@@ -1,5 +1,5 @@
 const presence = new Presence({
-	clientId: "640711877609127976"
+	clientId: "640711877609127976",
 });
 
 let gametypequery: string,
@@ -10,15 +10,21 @@ let gametypequery: string,
 	alivecount: string,
 	place: string;
 
-const browsingTimestamp = Math.floor(Date.now() / 1000);
+const browsingTimestamp = Math.floor(Date.now() / 1000),
+	assets = {
+		squad: "https://cdn.rcd.gg/PreMiD/websites/S/surviv.io/assets/0.png",
+		duo: "https://cdn.rcd.gg/PreMiD/websites/S/surviv.io/assets/1.png",
+		solo: "https://cdn.rcd.gg/PreMiD/websites/S/surviv.io/assets/2.png",
+	};
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "logo"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/S/surviv.io/assets/logo.png",
 		},
 		broadcasttc = await presence.getSetting<boolean>("broadcasttc"),
 		active =
-			window.getComputedStyle(document.getElementById("start-menu-wrapper"))
+			window.getComputedStyle(document.querySelector("#start-menu-wrapper"))
 				.display === "none";
 	presenceData.startTimestamp = browsingTimestamp;
 
@@ -40,10 +46,11 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "Join Game",
-						url: document.baseURI
-					}
+						url: document.baseURI,
+					},
 				];
-				presenceData.smallImageKey = gametype.toLowerCase();
+				presenceData.smallImageKey =
+					assets[gametype.toLowerCase() as keyof typeof assets];
 				presenceData.smallImageText =
 					document.querySelector("#team-code").textContent;
 			}

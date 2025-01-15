@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "837985880408457217"
+		clientId: "837985880408457217",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
@@ -11,11 +11,12 @@ function findElement(tagName: string, className: string): Element {
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "key",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/N/Neon/assets/logo.png",
 			details: "Browsing...",
-			startTimestamp: browsingTimestamp
+			startTimestamp: browsingTimestamp,
 		},
-		{ pathname } = document.location;
+		{ pathname, search } = document.location;
 
 	if (pathname.includes("/series/")) {
 		presenceData.details = "Viewing series:";
@@ -26,8 +27,8 @@ presence.on("UpdateData", async () => {
 		presenceData.buttons = [
 			{
 				label: "View Series",
-				url: document.URL
-			}
+				url: document.URL,
+			},
 		];
 	} else if (pathname.includes("/movie/")) {
 		presenceData.details = "Viewing movie:";
@@ -37,8 +38,8 @@ presence.on("UpdateData", async () => {
 		presenceData.buttons = [
 			{
 				label: "View Movie",
-				url: document.URL
-			}
+				url: document.URL,
+			},
 		];
 	} else if (pathname.includes("/trailer/")) {
 		const video = document.querySelector("video");
@@ -46,16 +47,17 @@ presence.on("UpdateData", async () => {
 		presenceData.details = findElement("span", "Tr-title")?.textContent;
 		presenceData.state = "Trailer";
 
-		presenceData.smallImageKey = video.paused ? "pause" : "play";
+		presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play;
 		presenceData.smallImageText = video.paused ? "Paused" : "Playing";
 
-		[, presenceData.endTimestamp] = presence.getTimestampsfromMedia(video);
+		[presenceData.startTimestamp, presenceData.endTimestamp] =
+			presence.getTimestampsfromMedia(video);
 
 		presenceData.buttons = [
 			{
 				label: "Watch Trailer",
-				url: document.URL
-			}
+				url: document.URL,
+			},
 		];
 
 		if (video.paused) {
@@ -72,10 +74,11 @@ presence.on("UpdateData", async () => {
 
 		presenceData.details = findElement("span", "Tr-title")?.textContent;
 
-		presenceData.smallImageKey = video.paused ? "pause" : "play";
+		presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play;
 		presenceData.smallImageText = video.paused ? "Paused" : "Playing";
 
-		[, presenceData.endTimestamp] = presence.getTimestampsfromMedia(video);
+		[presenceData.startTimestamp, presenceData.endTimestamp] =
+			presence.getTimestampsfromMedia(video);
 
 		if (isSeries) {
 			presenceData.state = `${findElement(
@@ -89,19 +92,17 @@ presence.on("UpdateData", async () => {
 		presenceData.buttons = [
 			{
 				label: isSeries ? "Watch Episode" : "Watch Movie",
-				url: document.URL
-			}
+				url: document.URL,
+			},
 		];
 
 		if (video.paused) {
 			delete presenceData.startTimestamp;
 			delete presenceData.endTimestamp;
 		}
-	} else if (document.location.search.startsWith("?")) {
+	} else if (search.startsWith("?")) {
 		presenceData.details = "Searching for:";
-		presenceData.state = new URLSearchParams(document.location.search).get(
-			"search"
-		);
+		presenceData.state = new URLSearchParams(search).get("search");
 	}
 
 	if (!(await presence.getSetting<boolean>("buttons")) && presenceData.buttons)

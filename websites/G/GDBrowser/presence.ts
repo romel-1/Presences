@@ -1,10 +1,32 @@
 const presence = new Presence({
-	clientId: "635876670146084880"
-});
+		clientId: "635876670146084880",
+	}),
+	/* eslint-disable camelcase */
+	assets = {
+		diff_hard: "https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/0.png",
+		diff_easy: "https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/1.png",
+		diff_normal: "https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/2.png",
+		diff_insane: "https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/3.png",
+		diff_harder: "https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/4.png",
+		diff_demon: "https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/5.png",
+		diff_auto: "https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/6.png",
+		diff_medium_demon:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/7.png",
+		diff_extreme_demon:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/8.png",
+		diff_hard_demon:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/9.png",
+		diff_easy_demon:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/10.png",
+		diff_insane_demon:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/11.png",
+	};
+/* eslint-enable camelcase */
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "coin"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/G/GDBrowser/assets/logo.png",
 		},
 		q = new URLSearchParams(window.location.search);
 
@@ -15,25 +37,31 @@ presence.on("UpdateData", async () => {
 			window.location.pathname.toLowerCase() === "/weekly"
 		) {
 			presenceData.state = `🔽 ${
-				document.getElementsByClassName("inline smaller spaced")[0].textContent
-			} | 👍 ${
-				document.getElementsByClassName("inline smaller spaced")[1]
-			} | 🔵 ${document.getElementsByClassName("orbs")[1].textContent}`;
+				document.querySelectorAll(".inline.smaller.spaced")[0].textContent
+			} | 👍 ${document.querySelectorAll(".inline.smaller.spaced")[1]} | 🔵 ${
+				document.querySelectorAll(".orbs")[1].textContent
+			}`;
 			presenceData.details = `${
-				document.getElementsByTagName("h1")[0].textContent
-			} ${document.getElementById("authorLink").textContent}`;
-			presenceData.smallImageKey = `diff_${document
-				.getElementById("difficultytext")
-				.textContent.toLowerCase()
-				.replace("<br>", "_")}`;
+				document.querySelectorAll("h1")[0].textContent
+			} ${document.querySelector("#authorLink").textContent}`;
+			presenceData.smallImageKey =
+				assets[
+					`diff_${document
+						.querySelector("#difficultytext")
+						.textContent.toLowerCase()
+						.replace("<br>", "_")}` as keyof typeof assets
+				];
 			presenceData.smallImageText = `${document
-				.getElementById("difficultytext")
+				.querySelector("#difficultytext")
 				.textContent.replace("<br>", " ")}`;
 		}
 
 		// Homepage
 		if (window.location.pathname.toLowerCase() === "/") {
-			if (document.getElementById("credits").style.display === "block") {
+			if (
+				document.querySelector<HTMLElement>("#credits").style.display ===
+				"block"
+			) {
 				presenceData.details = "Viewing the credits";
 				presenceData.state = "❤";
 			} else presenceData.details = "Viewing the homepage";
@@ -118,7 +146,7 @@ presence.on("UpdateData", async () => {
 								break;
 							default:
 								presenceData.state = `Searching for ${
-									document.getElementById("header").textContent
+									document.querySelector("#header").textContent
 								}`;
 								break;
 						}
