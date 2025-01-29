@@ -1,11 +1,12 @@
 const presence = new Presence({
-		clientId: "618233809481236491"
+		clientId: "618233809481236491",
 	}),
 	timeElapsed = Math.floor(Date.now() / 1000);
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "rainwv"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/R/Rainwave/assets/logo.png",
 	};
 	if (document.location.pathname.startsWith("/pages/playback_history"))
 		presenceData.details = "Looking at playback history...";
@@ -17,7 +18,7 @@ presence.on("UpdateData", async () => {
 		!document.querySelector("div#r4_audio_player.unselectable.playing")
 	) {
 		presenceData.details = "Not listening.";
-		presenceData.smallImageKey = "pause";
+		presenceData.smallImageKey = Assets.Pause;
 	} else {
 		presenceData.details = `${
 			document.querySelector<HTMLDivElement>(
@@ -33,7 +34,7 @@ presence.on("UpdateData", async () => {
 				"a.station.selected_station > div.station_details > div.station_name"
 			).textContent
 		}`;
-		presenceData.smallImageKey = "live";
+		presenceData.smallImageKey = Assets.Live;
 		presenceData.startTimestamp = timeElapsed;
 	}
 	presence.setActivity(presenceData);

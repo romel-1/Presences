@@ -1,13 +1,17 @@
 const presence = new Presence({
-		clientId: "842486883128705024"
+		clientId: "842486883128705024",
 	}),
 	path = location.pathname,
 	timeElapsed = ~~(Date.now() / 1000);
 
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/C/Codeforces/assets/logo.png",
+}
+
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "logo",
-		startTimestamp: timeElapsed
+		largeImageKey: Assets.Logo,
+		startTimestamp: timeElapsed,
 	};
 
 	switch (path.split("/")[1]) {
@@ -31,7 +35,7 @@ presence.on("UpdateData", async () => {
 				presenceData.state = `By ${
 					document.querySelector(".info > a").textContent
 				}`;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 			} else {
 				presenceData.details = "Browsing through";
 				presenceData.state = document
@@ -44,41 +48,31 @@ presence.on("UpdateData", async () => {
 
 		case "contests": {
 			if (path.includes("with")) {
-				const [, , , user] = path.split("/");
-
 				presenceData.details = "Viewing";
-				presenceData.state = `Participated contest of ${user}`;
+				presenceData.state = `Participated contest of ${path.split("/")[3]}`;
 			} else if (path.includes("writer")) {
-				const [, , , user] = path.split("/");
-
 				presenceData.details = "Viewing Problemsetting";
-				presenceData.state = `Contests of ${user}`;
+				presenceData.state = `Contests of ${path.split("/")[3]}`;
 			} else if (!location.pathname.split("/")[2]) {
 				presenceData.details = "Browsing through";
 				presenceData.state = "Upcoming contests and Past contests";
 			} else {
-				const [contestTitle] = document.title.split("-");
-
 				presenceData.details = "Waiting for contest";
-				presenceData.state = contestTitle.trim();
+				presenceData.state = document.title.split("-")[0].trim();
 			}
 			break;
 		}
 
 		case "contestRegistration": {
-			const contestTitle =
-				document.querySelector("#pageContent > h2").textContent;
-
 			presenceData.details = "Registering for";
-			presenceData.state = contestTitle;
+			presenceData.state =
+				document.querySelector("#pageContent > h2").textContent;
 			break;
 		}
 
 		case "contestRegistrants": {
-			const [, contestTitle] = document.title.split("-");
-
 			presenceData.details = "Viewing Registrants for";
-			presenceData.state = contestTitle.trim();
+			presenceData.state = document.title.split("-")[1].trim();
 			break;
 		}
 
@@ -91,7 +85,7 @@ presence.on("UpdateData", async () => {
 			if (path.includes("problem")) {
 				presenceData.details = contestTitle;
 				presenceData.state = document.querySelector(".title").textContent;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 				presenceData.smallImageText = "Solving";
 			} else if (path.includes("submit"))
 				presenceData.details = "Submitting Solution for";
@@ -106,19 +100,15 @@ presence.on("UpdateData", async () => {
 				presenceData.details = "Viewing Room";
 				presenceData.state = `${room.trim()} | ${contestTitle.trim()}`;
 			} else if (path.includes("standings")) {
-				const [, contestTitle] = document.title.split("-");
-
 				presenceData.details = "Viewing Final Standings";
-				presenceData.state = contestTitle.trim();
+				presenceData.state = document.title.split("-")[1].trim();
 			} else if (path.includes("ratings")) {
 				presenceData.details = "Viewing Rating Changes";
 				presenceData.state = document
 					.querySelector(".title")
 					.textContent.trim();
 			} else if (path.includes("participant")) {
-				const [, , , , user] = path.split("/");
-
-				presenceData.details = `Viewing ${user}'s submissions`;
+				presenceData.details = `Viewing ${path.split("/")[4]}'s submissions`;
 				presenceData.state = document.querySelector(".left").textContent;
 			} else if (path.includes("submission")) {
 				presenceData.details = "Viewing Submission";
@@ -139,7 +129,7 @@ presence.on("UpdateData", async () => {
 			if (path.includes("problem")) {
 				presenceData.details = gymTitle;
 				presenceData.state = document.querySelector(".title").textContent;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 				presenceData.smallImageText = "Solving";
 			} else if (path.includes("submit"))
 				presenceData.details = "Submitting Solution for";
@@ -148,10 +138,8 @@ presence.on("UpdateData", async () => {
 			else if (path.includes("status"))
 				presenceData.details = "Viewing Contest Status";
 			else if (path.includes("standings")) {
-				const [, gymTitle] = document.title.split("-");
-
 				presenceData.details = "Viewing Final Standings";
-				presenceData.state = gymTitle.trim();
+				presenceData.state = document.title.split("-")[1].trim();
 			} else if (path.includes("customtest")) {
 				presenceData.details = "Performing Custom Test";
 				delete presenceData.state;
@@ -178,7 +166,7 @@ presence.on("UpdateData", async () => {
 			if (path.includes("problem")) {
 				presenceData.details = document.querySelector(".left").textContent;
 				presenceData.state = document.querySelector(".title").textContent;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 				presenceData.smallImageText = "Solving";
 			} else if (path.includes("submit")) {
 				presenceData.details = "Submitting Solution for";
@@ -212,7 +200,7 @@ presence.on("UpdateData", async () => {
 			} else if (path.includes("problem")) {
 				presenceData.details = groupTitle;
 				presenceData.state = document.querySelector(".title").textContent;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 				presenceData.smallImageText = "Solving";
 			} else if (path.includes("submit")) {
 				presenceData.details = "Submitting Solution for";
@@ -224,17 +212,13 @@ presence.on("UpdateData", async () => {
 				presenceData.details = "Viewing Contest Status";
 				presenceData.state = `Gym: ${groupTitle}`;
 			} else if (path.includes("standings")) {
-				const [, title] = document.title.split("-");
-
 				presenceData.details = "Viewing Final Standings";
-				presenceData.state = title.trim();
+				presenceData.state = document.title.split("-")[1].trim();
 			} else if (path.includes("customtest"))
 				presenceData.details = "Performing Custom Test";
 			else if (path.includes("contest")) {
-				const [, title] = document.title.split("-");
-
 				presenceData.details = `Group Contest: ${groupTitle}`;
-				presenceData.state = title.trim();
+				presenceData.state = document.title.split("-")[1].trim();
 			}
 			break;
 		}
@@ -275,7 +259,7 @@ presence.on("UpdateData", async () => {
 					.querySelector(".eduCoursePath")
 					.textContent.trim();
 				presenceData.state = document.querySelector(".title").textContent;
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 				presenceData.smallImageText = "Solving";
 			} else if (path.includes("submit")) {
 				presenceData.details = "Submitting Solution for";
@@ -283,46 +267,38 @@ presence.on("UpdateData", async () => {
 					.querySelector(".eduCoursePath")
 					.textContent.trim();
 			} else if (path.includes("status")) {
-				const topicTitle = document
-					.querySelector(".eduLessonPath")
-					.textContent.trim();
-
 				presenceData.details = "Viewing Submissions in";
-				presenceData.state = `${topicTitle} | ${document
+				presenceData.state = `${document
+					.querySelector(".eduLessonPath")
+					.textContent.trim()} | ${document
 					.querySelector(".eduCoursePath")
 					.textContent.trim()}`;
 			} else if (path.includes("hacks")) {
-				const topicTitle = document
-					.querySelector(".eduLessonPath")
-					.textContent.trim();
-
 				presenceData.details = "Viewing hacks in";
-				presenceData.state = `${topicTitle} | ${document
+				presenceData.state = `${document
+					.querySelector(".eduLessonPath")
+					.textContent.trim()} | ${document
 					.querySelector(".eduCoursePath")
 					.textContent.trim()}`;
 			} else if (path.includes("standings")) {
-				const topicTitle = document
-					.querySelector(".eduLessonPath")
-					.textContent.trim();
-
 				presenceData.details = "Viewing Final Standings in";
-				presenceData.state = `${topicTitle} | ${document
+				presenceData.state = `${document
+					.querySelector(".eduLessonPath")
+					.textContent.trim()} | ${document
 					.querySelector(".eduCoursePath")
 					.textContent.trim()}`;
 			} else if (path.includes("customtest")) {
 				presenceData.details = "Performing Custom Test";
 				delete presenceData.state;
 			} else if (path.includes("practice")) {
-				const [, topicTitle] = document.title.split("-");
-
 				presenceData.details = "Viewing Edu practice";
-				presenceData.state = topicTitle.trim();
+				presenceData.state = document.title.split("-")[1].trim();
 			} else if (path.includes("lesson")) {
 				presenceData.details = "Taking a lesson";
 				presenceData.state = document
 					.querySelector(".eduLessonPath")
 					.textContent.trim();
-				presenceData.smallImageKey = "reading";
+				presenceData.smallImageKey = Assets.Reading;
 			} else if (path.split("/")[2] === "courses") {
 				presenceData.details = "Browsing through";
 				presenceData.state = "Edu (Courses)";
@@ -334,7 +310,7 @@ presence.on("UpdateData", async () => {
 		case "apiHelp": {
 			presenceData.details = "Reading";
 			presenceData.state = "API Help";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			break;
 		}
 
@@ -351,10 +327,8 @@ presence.on("UpdateData", async () => {
 		}
 
 		case "profile": {
-			const [user] = document.title.split("-");
-
 			presenceData.details = "Viewing profile";
-			presenceData.state = user.trim();
+			presenceData.state = document.title.split("-")[0].trim();
 			break;
 		}
 
@@ -371,10 +345,8 @@ presence.on("UpdateData", async () => {
 		}
 
 		case "submissions": {
-			const [, , user] = path.split("/");
-
 			presenceData.details = "Viewing";
-			presenceData.state = `${user}'s submissions`;
+			presenceData.state = `${path.split("/")[2]}'s submissions`;
 			break;
 		}
 

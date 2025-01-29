@@ -2,7 +2,7 @@ type Functionlize<T> = {
 	[P in keyof T]: () => T[P];
 };
 
-interface Route extends Functionlize<Partial<PresenceData>> {
+interface Route extends Functionlize<Partial<PresenceDataFull>> {
 	path: RegExp;
 	playback?(): boolean;
 	run?(): PresenceData;
@@ -11,7 +11,7 @@ interface Route extends Functionlize<Partial<PresenceData>> {
 enum Settings {
 	TIMESTAMP = "timestamp",
 	BUTTONS = "buttons",
-	LOGO = "logo"
+	LOGO = "logo",
 }
 
 enum Icons {
@@ -19,23 +19,23 @@ enum Icons {
 	PLAYED = "played",
 	SEARCHING = "searching",
 	LOCATION = "location",
-	DISCOVERY = "discovery"
+	DISCOVERY = "discovery",
 }
 
 enum Logos {
 	LIGHT = "light-logo",
-	DARK = "dark-logo"
+	DARK = "dark-logo",
 }
 
 let video = { duration: 0, currentTime: 0, paused: true };
 
 const presence = new Presence({
-		clientId: "770030754356396052"
+		clientId: "770030754356396052",
 	}),
 	startTimestamp: number = Math.floor(Date.now() / 1000),
 	router = ({
 		path,
-		presenceData
+		presenceData,
 	}: {
 		path: string;
 		presenceData: PresenceData;
@@ -45,10 +45,11 @@ const presence = new Presence({
 			{
 				path: /^\/episode\//,
 				run: () => {
-					[, presenceData.endTimestamp] = presence.getTimestamps(
-						Math.floor(video.currentTime),
-						Math.floor(video.duration)
-					);
+					[presenceData.startTimestamp, presenceData.endTimestamp] =
+						presence.getTimestamps(
+							Math.floor(video.currentTime),
+							Math.floor(video.duration)
+						);
 
 					if (video.paused) {
 						delete presenceData.startTimestamp;
@@ -80,9 +81,9 @@ const presence = new Presence({
 						url: document
 							.querySelector(".anime-page-link")
 							.querySelector("a")
-							.getAttribute("href")
-					}
-				]
+							.getAttribute("href"),
+					},
+				],
 			},
 			{
 				path: /^\/\?search_param=(.*)/,
@@ -96,7 +97,7 @@ const presence = new Presence({
 						.textContent.split(" ")
 						.slice(4, -1)
 						.join(" ")}`,
-				buttons: () => [{ label: "Results", url: location.href }]
+				buttons: () => [{ label: "Results", url: location.href }],
 			},
 			{
 				path: /^\/anime\/(.*)/,
@@ -111,24 +112,24 @@ const presence = new Presence({
 						url: document
 							.querySelector("#DivEpisodesList")
 							.lastElementChild.querySelector("a")
-							.getAttribute("href")
-					}
-				]
+							.getAttribute("href"),
+					},
+				],
 			},
 			{
 				path: /^\/(%d9%82%d8%a7%d8%a6%d9%85%d8%a9-%d8%a7%d9%84%d8%a7%d9%86%d9%85%d9%8a|anime-(.*))/,
 				smallImageKey: () => Icons.DISCOVERY,
 				smallImageText: () => "Browsing",
 				details: () => "Browsing for Anime",
-				buttons: () => [{ label: "Browse", url: location.href }]
+				buttons: () => [{ label: "Browse", url: location.href }],
 			},
 			{
 				path: /^\/%d9%85%d9%88%d8%a7%d8%b9%d9%8a%d8%af-%d8%b9%d8%b1%d8%b6-%d8%ad%d9%84%d9%82%d8%a7%d8%aa-%d8%a7%d9%84%d8%a7%d9%86%d9%85%d9%8a/,
 				smallImageKey: () => Icons.DISCOVERY,
 				smallImageText: () => "Discovering",
 				details: () => "Discovering Episodes Releases",
-				buttons: () => [{ label: "Discover", url: location.href }]
-			}
+				buttons: () => [{ label: "Discover", url: location.href }],
+			},
 		];
 
 		return routes.find(route => route.path.test(path));
@@ -145,18 +146,18 @@ presence.on("UpdateData", async () => {
 	const [showTimestamp, showButtons, logo] = await Promise.all([
 		presence.getSetting<boolean>(Settings.TIMESTAMP),
 		presence.getSetting<boolean>(Settings.BUTTONS),
-		presence.getSetting<number>(Settings.LOGO)
+		presence.getSetting<number>(Settings.LOGO),
 	]);
 
 	let presenceData: PresenceData = {
-		largeImageKey: [Logos.LIGHT, Logos.DARK][logo] || Logos.LIGHT
+		largeImageKey: [Logos.LIGHT, Logos.DARK][logo] || Logos.LIGHT,
 	};
 
 	if (showTimestamp) presenceData.startTimestamp = startTimestamp;
 
 	const route = router({
 		presenceData,
-		path: location.href.replace(`https://${location.hostname}`, "")
+		path: location.href.replace(`https://${location.hostname}`, ""),
 	});
 
 	if (!route) return presence.setActivity(presenceData);
@@ -164,7 +165,8 @@ presence.on("UpdateData", async () => {
 	if (route.run) presenceData = route.run();
 	if (route.state) presenceData.state = route.state();
 	if (route.details) presenceData.details = route.details();
-	if (showButtons && route.buttons) presenceData.buttons = route.buttons();
+	if (showButtons && route.buttons)
+		presenceData.buttons = route.buttons() as [ButtonData, ButtonData?];
 	if (route.largeImageKey) presenceData.largeImageKey = route.largeImageKey();
 	if (route.smallImageKey) presenceData.smallImageKey = route.smallImageKey();
 	if (route.smallImageText)

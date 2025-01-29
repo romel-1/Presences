@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "643821029940133898"
+		clientId: "643821029940133898",
 	}),
 	pages: { [key: string]: string } = {
 		"/": "Ana Sayfa",
@@ -47,7 +47,7 @@ const presence = new Presence({
 		"/account/connected-accounts": "Bağlı Hesaplar",
 		"/account/following": "Takip Ettiklerim",
 		"/account/ignored": "Yok Sayılanlar",
-		"/account": "Hesap Ayrıntıları"
+		"/account": "Hesap Ayrıntıları",
 	};
 
 presence.on("UpdateData", async () => {
@@ -78,25 +78,27 @@ presence.on("UpdateData", async () => {
 			time.textContent !== ""
 		) {
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: title.textContent || "Belirsiz",
 				state: `Yazar: ${author.textContent.replace(
 					"yazar",
 					""
 				)} (${time.textContent.trim().replace("eklendi", "")})`,
-				smallImageKey: "read",
+				smallImageKey: Assets.Reading,
 				smallImageText: "Bir gönderi okuyor...",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (page.includes("/yazar/")) {
 			const title = document.title.split(" ");
 
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Bir yazara bakıyor:",
 				state:
 					title.slice(0, title.indexOf("Yazıları")).join(" ") ?? "Belirsiz",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (page.includes("/arama/")) {
 			const searchingFor = document.querySelector(
@@ -104,21 +106,23 @@ presence.on("UpdateData", async () => {
 			);
 
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Bir şey arıyor:",
 				state:
 					searchingFor && searchingFor.textContent
-						? searchingFor.textContent.replace(/"/g, "")
+						? searchingFor.textContent.replaceAll('"', "")
 						: "Belirsiz",
-				smallImageKey: "search",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				smallImageKey: Assets.Search,
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (pages[page] || pages[page.slice(0, -1)]) {
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Bir sayfaya göz atıyor:",
 				state: pages[page] || pages[page.slice(0, -1)],
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		}
 	} else if (host === "forum.shiftdelete.net") {
@@ -128,10 +132,11 @@ presence.on("UpdateData", async () => {
 
 		if (page.includes("/members/") && user && user.textContent !== "") {
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Bir kullanıcıya bakıyor:",
 				state: user.textContent,
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (page.includes("/post-thread")) {
 			const newTitle = document.querySelector(
@@ -139,13 +144,14 @@ presence.on("UpdateData", async () => {
 			) as HTMLInputElement;
 
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Yeni bir forum gönderisi açıyor:",
 				state:
 					newTitle && newTitle.value !== ""
 						? newTitle.value
 						: "Henüz Başlık Girilmemiş",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (page.includes("/forums/")) {
 			const forumTitle = document.querySelector(
@@ -153,13 +159,14 @@ presence.on("UpdateData", async () => {
 			);
 
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Bir foruma göz atıyor:",
 				state:
 					forumTitle && forumTitle.textContent
 						? forumTitle.textContent
 						: "Belirsiz",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (page.includes("/threads/")) {
 			const title = document.querySelector(
@@ -171,7 +178,8 @@ presence.on("UpdateData", async () => {
 				);
 
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details:
 					title && title.textContent !== ""
 						? title.textContent
@@ -181,9 +189,10 @@ presence.on("UpdateData", async () => {
 						? author.textContent
 						: "Belirsiz Gönderi Sahibi"
 				} ${time && time.textContent !== "" ? `(${time.textContent})` : ""}`,
-				smallImageKey: "forum",
+				smallImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/0.png",
 				smallImageText: "Bir forum gönderisi okuyor.",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (page.includes("/search/")) {
 			const searchingFor = document.querySelector(
@@ -191,23 +200,26 @@ presence.on("UpdateData", async () => {
 			);
 
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Forumda bir gönderi arıyor:",
 				state:
 					searchingFor && searchingFor.textContent !== ""
 						? searchingFor.textContent
 						: "Belirsiz",
-				smallImageKey: "search",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				smallImageKey: Assets.Search,
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		} else if (pages[page] || pages[page.slice(0, -1)]) {
 			presence.setActivity({
-				largeImageKey: "sd-logo",
+				largeImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/logo.png",
 				details: "Bir sayfaya göz atıyor:",
 				state: pages[page] || pages[page.slice(0, -1)],
-				smallImageKey: "forum",
+				smallImageKey:
+					"https://cdn.rcd.gg/PreMiD/websites/S/ShiftDelete.Net/assets/0.png",
 				smallImageText: "Bu kullanıcı şuan da SDN Forum'da.",
-				startTimestamp: Math.floor(Date.now() / 1000)
+				startTimestamp: Math.floor(Date.now() / 1000),
 			});
 		}
 	}

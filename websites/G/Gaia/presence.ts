@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "928134371205083166"
+		clientId: "928134371205083166",
 	}),
 	browsingTimestamp = Date.now() / 1000,
 	shortenedURLs: Record<string, string> = {};
@@ -21,14 +21,14 @@ async function getShortURL(url: string) {
 
 presence.on("UpdateData", async () => {
 	let presenceData: PresenceData = {
-		largeImageKey: "gaia",
-		smallImageKey: "browse",
-		startTimestamp: browsingTimestamp
+		largeImageKey: "https://cdn.rcd.gg/PreMiD/websites/G/Gaia/assets/logo.png",
+		smallImageKey: Assets.Search,
+		startTimestamp: browsingTimestamp,
 	};
 
 	const [buttons, cover] = await Promise.all([
 			presence.getSetting<boolean>("buttons"),
-			presence.getSetting<boolean>("cover")
+			presence.getSetting<boolean>("cover"),
 		]),
 		pages: Record<
 			string,
@@ -46,7 +46,7 @@ presence.on("UpdateData", async () => {
 								?.textContent,
 							document
 								.querySelector(".text-season-episode")
-								?.textContent?.toUpperCase()
+								?.textContent?.toUpperCase(),
 						],
 						coverUrl = document
 							.querySelector<HTMLElement>(".vjs-poster")
@@ -57,20 +57,22 @@ presence.on("UpdateData", async () => {
 					data.details = title.find(Boolean);
 					data.state = title[0] ? `${title[2]} ${title[1]}` : "Film";
 
-					data.smallImageKey = video.paused ? "pause" : "play";
+					data.smallImageKey = video.paused ? Assets.Pause : Assets.Play;
 					data.smallImageText = video.paused ? "Paused" : "Playing";
 
 					if (cover && coverUrl)
 						data.largeImageKey = await getShortURL(coverUrl);
 
-					if (!video.paused)
-						data.endTimestamp = presence.getTimestampsfromMedia(video).pop();
+					if (!video.paused) {
+						[data.startTimestamp, data.endTimestamp] =
+							presence.getTimestampsfromMedia(video);
+					}
 
 					data.buttons = [
 						{
 							label: title[0] ? "Watch Series" : "Watch Film",
-							url: document.URL
-						}
+							url: document.URL,
+						},
 					];
 
 					return data;
@@ -80,7 +82,7 @@ presence.on("UpdateData", async () => {
 							document.querySelector(".jumbotron-episode__meta > h1") ??
 							document.querySelector(".heading.detail-series__title")
 						)?.textContent,
-						document.querySelector(".jumbotron-video__meta> h1")?.textContent
+						document.querySelector(".jumbotron-video__meta> h1")?.textContent,
 					];
 
 					data.details = title[0] ? "Viewing series:" : "Viewing film:";
@@ -89,8 +91,8 @@ presence.on("UpdateData", async () => {
 					data.buttons = [
 						{
 							label: title[0] ? "View Series" : "View Film",
-							url: document.URL
-						}
+							url: document.URL,
+						},
 					];
 
 					return data;
@@ -100,15 +102,15 @@ presence.on("UpdateData", async () => {
 				() => ({
 					details: "Browsing:",
 					state: document.querySelector(".heading.jumbotron-subcategory__title")
-						.textContent
+						.textContent,
 				}),
 			"/films-docs/": {
 				details: "Browsing:",
-				state: "Docs & Films"
+				state: "Docs & Films",
 			},
 			"/recently-added": {
-				details: "Viewing what's new on Gaia"
-			}
+				details: "Viewing what's new on Gaia",
+			},
 		};
 
 	for (const [path, data] of Object.entries(pages)) {
@@ -117,8 +119,8 @@ presence.on("UpdateData", async () => {
 				const output = await data();
 
 				if (output.largeImageKey) presenceData = output;
-				else presenceData = { ...presenceData, ...output };
-			} else presenceData = { ...presenceData, ...data };
+				else presenceData = { ...presenceData, ...output } as PresenceData;
+			} else presenceData = { ...presenceData, ...data } as PresenceData;
 		}
 	}
 

@@ -2,9 +2,9 @@ const iframe = new iFrame();
 
 iframe.on("UpdateData", async () => {
 	// Exclude proxer
-	if (document.getElementById("proxerToken")) return;
+	if (document.querySelector("#proxerToken")) return;
 
-	const videos = document.getElementsByTagName("video"),
+	const videos = document.querySelectorAll("video"),
 		[video] = videos;
 	if (videos.length === 0) return;
 
@@ -12,9 +12,9 @@ iframe.on("UpdateData", async () => {
 		// Exclude proxer ads
 		if (video.className.includes("ads")) return;
 		iframe.send({
-			time: video.currentTime,
+			currentTime: video.currentTime,
 			duration: video.duration,
-			paused: video.paused
+			paused: video.paused,
 		});
 	} else iframe.send(null);
 });

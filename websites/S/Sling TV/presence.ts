@@ -1,11 +1,11 @@
 const presence = new Presence({
-		clientId: "764916517895798796"
+		clientId: "764916517895798796",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		live: "presence.activity.live",
-		search: "presence.activity.searching"
+		play: "general.playing",
+		pause: "general.paused",
+		live: "general.live",
+		search: "general.searching",
 	});
 
 /**
@@ -30,15 +30,16 @@ presence.on("UpdateData", async () => {
 		endTimestamp;
 	/* eslint-enable no-one-time-vars/no-one-time-vars */
 
-	const { href } = window.location,
+	const { href, pathname } = window.location,
 		presenceData: PresenceData = {
 			details,
 			state,
-			largeImageKey: "slingtv",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/S/Sling%20TV/assets/logo.png",
 			smallImageKey,
 			smallImageText,
 			startTimestamp,
-			endTimestamp
+			endTimestamp,
 		};
 
 	if (href !== oldUrl) {
@@ -48,30 +49,29 @@ presence.on("UpdateData", async () => {
 
 	presenceData.startTimestamp = elapsed;
 
-	if (window.location.pathname.includes("/watch")) {
+	if (pathname.includes("/watch")) {
 		video = document.querySelector(".bitmovinplayer-container video");
 		if (video) {
 			title = document.querySelector("title");
-			const [startTimestamp, endTimestamp] = presence.getTimestamps(
-					Math.floor(video.currentTime),
-					Math.floor(video.duration)
-				),
-				live = endTimestamp === Infinity;
+			const live = video.duration === Infinity;
 
 			if (title) presenceData.state = getStateText(video.paused, live);
 
 			presenceData.smallImageKey = live
-				? "live"
+				? Assets.Live
 				: video.paused
-				? "pause"
-				: "play";
+				? Assets.Pause
+				: Assets.Play;
 			presenceData.smallImageText = live
 				? (await strings).live
 				: video.paused
 				? (await strings).pause
 				: (await strings).play;
-			presenceData.startTimestamp = live ? elapsed : startTimestamp;
-			if (!live) presenceData.endTimestamp = endTimestamp;
+
+			if (!live) {
+				[presenceData.startTimestamp, presenceData.endTimestamp] =
+					presence.getTimestampsfromMedia(video);
+			}
 			if (video.paused) {
 				delete presenceData.startTimestamp;
 				delete presenceData.endTimestamp;

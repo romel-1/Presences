@@ -11,7 +11,7 @@ const presence = new Presence({ clientId: "802246778010730548" }),
 		oddsRed: "span#lastbet.dynamic-view > span.redtext:nth-last-child(2)",
 		oddsBlue: "span#lastbet.dynamic-view > span.bluetext:nth-last-child(1)",
 		betsView: "span#lastbet.dynamic-view",
-		balance: "span#balance.dollar"
+		balance: "span#balance.dollar",
 	};
 
 let fightersCheck: string,
@@ -21,19 +21,25 @@ function getText(selector: string) {
 	return document.querySelector(selector)?.textContent;
 }
 
+const enum Assets {
+	Salero = "https://cdn.rcd.gg/PreMiD/websites/S/Salty%20Bet/assets/0.png",
+	Trofeo = "https://cdn.rcd.gg/PreMiD/websites/S/Salty%20Bet/assets/1.png",
+	Saltgirl = "https://cdn.rcd.gg/PreMiD/websites/S/Salty%20Bet/assets/2.png",
+}
+
 function getModeImageKey(): string[] {
 	if (
 		getText(SelectorMap.tmode) ||
 		getText(SelectorMap.footer).includes("bracket!") ||
 		getText(SelectorMap.footer).includes("FINAL")
 	)
-		return ["trofeo", "Tournament Mode"];
+		return [Assets.Trofeo, "Tournament Mode"];
 	else if (
 		getText(SelectorMap.footer).includes("exhibition") ||
 		getText(SelectorMap.footer).includes("Exhibition")
 	)
-		return ["saltgirl", "Exhibition Mode"];
-	else return ["salero", "Matchmaking Mode"];
+		return [Assets.Saltgirl, "Exhibition Mode"];
+	else return [Assets.Salero, "Matchmaking Mode"];
 }
 
 function getFighters(): string {
@@ -125,69 +131,80 @@ function abbrNum(number: number, decPlaces: number): string {
 presence.on("UpdateData", async () => {
 	const [bet, buttons] = await Promise.all([
 			presence.getSetting<boolean>("bet"),
-			presence.getSetting<boolean>("buttons")
+			presence.getSetting<boolean>("buttons"),
 		]),
 		presenceData: PresenceData = {
-			largeImageKey: "salty"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/S/Salty%20Bet/assets/logo.png",
 		};
-	if (
-		document.location.pathname === "/" ||
-		document.location.pathname === "/index"
-	) {
-		const [modeKey, modeText] = getModeImageKey();
+	switch (document.location.pathname) {
+		case "/":
+		case "/index": {
+			const [modeKey, modeText] = getModeImageKey();
 
-		if (fightersCheck !== getFighters()) {
-			presenceData.details = getFighters();
-			fightersCheck = getFighters();
-		} else {
-			presenceData.details = `${getFighters()}‎`;
-			fightersCheck = `${getFighters()}‎`;
-		}
-
-		presenceData.state = getBetStatus(bet);
-
-		presenceData.smallImageKey = modeKey;
-		presenceData.smallImageText = modeText;
-
-		isBetOpen()
-			? (browsingTimestamp = Math.floor(Date.now() / 1000))
-			: (presenceData.startTimestamp = browsingTimestamp);
-
-		if (buttons) {
-			switch (modeKey) {
-				case "trofeo":
-					presenceData.buttons = [
-						{
-							label: "Tournament Bracket",
-							url: "https://www.saltybet.com/shaker?bracket=1"
-						}
-					];
-					break;
-				case "saltgirl":
-					presenceData.buttons = [
-						{
-							label: "Exhibition Queue",
-							url: "https://www.saltybet.com/shaker?activerequests=1"
-						}
-					];
-					break;
+			if (fightersCheck !== getFighters()) {
+				presenceData.details = getFighters();
+				fightersCheck = getFighters();
+			} else {
+				presenceData.details = `${getFighters()}‎`;
+				fightersCheck = `${getFighters()}‎`;
 			}
+
+			presenceData.state = getBetStatus(bet);
+
+			presenceData.smallImageKey = modeKey;
+			presenceData.smallImageText = modeText;
+
+			isBetOpen()
+				? (browsingTimestamp = Math.floor(Date.now() / 1000))
+				: (presenceData.startTimestamp = browsingTimestamp);
+
+			if (buttons) {
+				switch (modeKey) {
+					case "trofeo":
+						presenceData.buttons = [
+							{
+								label: "Tournament Bracket",
+								url: "https://www.saltybet.com/shaker?bracket=1",
+							},
+						];
+						break;
+					case "saltgirl":
+						presenceData.buttons = [
+							{
+								label: "Exhibition Queue",
+								url: "https://www.saltybet.com/shaker?activerequests=1",
+							},
+						];
+						break;
+				}
+			}
+
+			break;
 		}
-	} else if (document.location.pathname === "/authenticate") {
-		presenceData.details = "Signing in...";
-		presenceData.startTimestamp = browsingTimestamp;
-	} else if (document.location.pathname === "/bank") {
-		presenceData.details = "Checking Bank";
-		presenceData.startTimestamp = browsingTimestamp;
-	} else if (document.URL === "https://www.saltybet.com/shaker?bracket=1") {
-		presenceData.details = "Checking Tournament Bracket";
-		presenceData.startTimestamp = browsingTimestamp;
-	} else if (
-		document.URL === "https://www.saltybet.com/shaker?activerequests=1"
-	) {
-		presenceData.details = "Checking Exhibition Queue";
-		presenceData.startTimestamp = browsingTimestamp;
-	} else presenceData.details = null;
+		case "/authenticate": {
+			presenceData.details = "Signing in...";
+			presenceData.startTimestamp = browsingTimestamp;
+
+			break;
+		}
+		case "/bank": {
+			presenceData.details = "Checking Bank";
+			presenceData.startTimestamp = browsingTimestamp;
+
+			break;
+		}
+		default:
+			if (document.URL === "https://www.saltybet.com/shaker?bracket=1") {
+				presenceData.details = "Checking Tournament Bracket";
+				presenceData.startTimestamp = browsingTimestamp;
+			} else if (
+				document.URL === "https://www.saltybet.com/shaker?activerequests=1"
+			) {
+				presenceData.details = "Checking Exhibition Queue";
+				presenceData.startTimestamp = browsingTimestamp;
+			} else presenceData.details = null;
+	}
 
 	if (presenceData.details) presence.setActivity(presenceData);
 	else presence.setActivity();

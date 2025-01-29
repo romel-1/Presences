@@ -1,5 +1,5 @@
 const presence = new Presence({
-	clientId: "701623299460825108"
+	clientId: "701623299460825108",
 });
 
 let title = "Loading SimulatorHits",
@@ -7,7 +7,7 @@ let title = "Loading SimulatorHits",
 	presenter = "AutoDJ";
 
 function getSongData(): void {
-	fetch("https://api.simulatorhits.dev/now-playing?override").then(response => {
+	fetch("https://api.simulatorhits.com/now-playing?override").then(response => {
 		if (response.status === 200) {
 			response.json().then(data => {
 				({ title, artist } = data.song);
@@ -24,31 +24,49 @@ const currentTime = Math.floor(Date.now() / 1000);
 
 presence.on("UpdateData", () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "logo",
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/S/SimulatorHits/assets/logo.png",
 		smallImageText: `Current Presenter: ${presenter}`,
-		smallImageKey: "play",
-		startTimestamp: currentTime
+		smallImageKey: Assets.Play,
+		startTimestamp: currentTime,
 	};
 
 	if (document.location.hostname === "simulatorhits.com") {
-		if (document.location.pathname === "/schedule") {
-			presenceData.details = "Viewing Schedule";
-			presenceData.smallImageKey = "reading";
-		} else if (document.location.pathname === "/news") {
-			presenceData.details = "Reading News";
-			presenceData.smallImageKey = "reading";
-		} else if (document.location.pathname === "/about/meet-the-team") {
-			presenceData.details = "Viewing Staff Team";
-			presenceData.smallImageKey = "reading";
-		} else if (document.location.pathname === "/request") {
-			presenceData.details = "Making a Request";
-			presenceData.smallImageKey = "writing";
-		} else if (document.location.pathname === "/streamers") {
-			presenceData.details = "Viewing Streamers";
-			presenceData.smallImageKey = "reading";
-		} else {
-			presenceData.details = title;
-			presenceData.state = artist;
+		switch (document.location.pathname) {
+			case "/schedule": {
+				presenceData.details = "Viewing Schedule";
+				presenceData.smallImageKey = Assets.Reading;
+
+				break;
+			}
+			case "/news": {
+				presenceData.details = "Reading News";
+				presenceData.smallImageKey = Assets.Reading;
+
+				break;
+			}
+			case "/about/meet-the-team": {
+				presenceData.details = "Viewing Staff Team";
+				presenceData.smallImageKey = Assets.Reading;
+
+				break;
+			}
+			case "/request": {
+				presenceData.details = "Making a Request";
+				presenceData.smallImageKey = Assets.Writing;
+
+				break;
+			}
+			case "/streamers": {
+				presenceData.details = "Viewing Streamers";
+				presenceData.smallImageKey = Assets.Reading;
+
+				break;
+			}
+			default: {
+				presenceData.details = title;
+				presenceData.state = artist;
+			}
 		}
 	}
 

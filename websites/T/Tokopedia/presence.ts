@@ -1,10 +1,11 @@
 const presence = new Presence({
-	clientId: "798368817318330400"
+	clientId: "798368817318330400",
 });
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "tokopedia"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/T/Tokopedia/assets/logo.png",
 		},
 		elapsed = Math.floor(Date.now() / 1000);
 	if (document.location.hostname === "www.tokopedia.com") {
@@ -22,6 +23,13 @@ presence.on("UpdateData", async () => {
 			presence.setActivity(presenceData);
 		} else if (document.location.pathname.includes("/edu")) {
 			presenceData.details = "Viewing on EduMart....";
+			presenceData.startTimestamp = elapsed;
+			presence.setActivity(presenceData);
+		} else if (document.location.pathname.includes("/search")) {
+			presenceData.details = "Searching for a product....";
+			presenceData.state = new URL(document.location.href).searchParams.get(
+				"q"
+			);
 			presenceData.startTimestamp = elapsed;
 			presence.setActivity(presenceData);
 		} else {

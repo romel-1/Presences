@@ -1,10 +1,11 @@
 const presence = new Presence({
-		clientId: "657615662537244673"
+		clientId: "657615662537244673",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000),
 	presenceData: PresenceData = {
-		largeImageKey: "log-logo",
-		startTimestamp: browsingTimestamp
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/L/Log.com.tr/assets/logo.png",
+		startTimestamp: browsingTimestamp,
 	};
 
 function makeCategoryRPC(title: string): void {
@@ -20,9 +21,9 @@ presence.on("UpdateData", () => {
 		presenceData.state = "Haberlere göz atıyor...";
 	}
 
-	if (document.getElementsByClassName("entry-title").length > 0) {
+	if (document.querySelectorAll(".entry-title").length > 0) {
 		// Reading an article
-		const [title] = document.getElementsByClassName("entry-title");
+		const [title] = document.querySelectorAll(".entry-title");
 		presenceData.details = "Bir haber okuyor...";
 		presenceData.state = title
 			? title.textContent.replace("[İzle]", "")

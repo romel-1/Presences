@@ -1,32 +1,56 @@
 const presence = new Presence({
-		clientId: "760586876854992926"
+		clientId: "721740741570986016",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		browsing: "presence.activity.browsing"
+		paused: "general.paused",
+		browse: "general.browsing",
 	});
 
-function getTime(list: string[]): number {
-	let ret = 0;
-	for (let index = list.length - 1; index >= 0; index--)
-		ret += parseInt(list[index]) * 60 ** index;
-
-	return ret;
+function updateLogo() {
+	const trackCoverartDiv = document.querySelector(".track-coverart");
+	if (trackCoverartDiv) {
+		const style = trackCoverartDiv.getAttribute("style");
+		if (style) {
+			const match = decodeURIComponent(style).match(/url\("([^"]+?)"\)/);
+			if (match && match[1]) {
+				let url = match[1];
+				url = url.replace(/&size=\d+/, "");
+				return url;
+			}
+		}
+	}
+	return "https://cdn.rcd.gg/PreMiD/websites/A/Anghami/assets/logo.png";
 }
 
-function getTimestamps(audioTime: string, audioDuration: string): number[] {
-	return [
-		Math.floor(Date.now() / 1000),
-		Math.floor(Date.now() / 1000) -
-			getTime(audioTime.split(":").reverse()) +
-			getTime(audioDuration.split(":").reverse())
-	];
+function calculateEndTimestamp(
+	startTime: string,
+	remainingTime: string
+): string {
+	const [startMinutes, startSeconds] = startTime.trim().split(":").map(Number),
+		[remainingMinutes, remainingSeconds] = remainingTime
+			.trim()
+			.split(":")
+			.map(Number),
+		endTotalSeconds =
+			startMinutes * 60 +
+			startSeconds +
+			remainingMinutes * 60 +
+			remainingSeconds;
+
+	let endMinutes = Math.floor(endTotalSeconds / 60),
+		endSeconds = endTotalSeconds % 60;
+
+	if (endSeconds === 60) {
+		endSeconds = 0;
+		endMinutes++;
+	}
+	return `${endMinutes}:${endSeconds.toString().padStart(2, "0")}`;
 }
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "anlg"
+			largeImageKey: updateLogo(),
+			type: ActivityType.Listening,
 		},
 		playback = !!document.querySelector("anghami-player");
 
@@ -34,7 +58,7 @@ presence.on("UpdateData", async () => {
 		const selectors: NodeListOf<Node> =
 				document.querySelectorAll(".duration-text"),
 			playing: boolean =
-				document.querySelector("anghami-player anghami-icon.icon.pause") !==
+				document.querySelector("anghami-player svg[title='pause-shape']") !==
 				null;
 		let selector: Node = document.querySelector(
 			"anghami-player .action-title .trim"
@@ -43,14 +67,23 @@ presence.on("UpdateData", async () => {
 		selector = document.querySelector("anghami-player .action-artist .trim");
 		presenceData.state = (selector && selector.textContent) || null;
 
-		presenceData.smallImageKey = playing ? "play" : "pause";
-		presenceData.smallImageText = playing
-			? (await strings).play
-			: (await strings).pause;
-		[presenceData.startTimestamp, presenceData.endTimestamp] = getTimestamps(
-			(selectors[0] && selectors[0].textContent.trim()) || "0:0",
-			(selectors[1] && selectors[1].textContent.trim()) || "0:0"
-		);
+		if (!playing) {
+			presenceData.smallImageKey = Assets.Pause;
+			presenceData.smallImageText = "Paused";
+		}
+		const duration = presence.timestampFromFormat(
+				calculateEndTimestamp(
+					selectors[0].textContent,
+					selectors[1].textContent
+				)
+			),
+			timestamps = presence.getTimestamps(
+				presence.timestampFromFormat(selectors[0].textContent),
+				duration
+			);
+
+		presenceData.startTimestamp = timestamps[0];
+		presenceData.endTimestamp = timestamps[1];
 
 		if (!playing) {
 			delete presenceData.startTimestamp;
@@ -59,9 +92,9 @@ presence.on("UpdateData", async () => {
 
 		presence.setActivity(presenceData, playback);
 	} else {
-		presenceData.details = (await strings).browsing;
-		presenceData.smallImageKey = "search";
-		presenceData.smallImageText = (await strings).browsing;
+		presenceData.details = (await strings).browse;
+		presenceData.smallImageKey = Assets.Search;
+		presenceData.smallImageText = (await strings).browse;
 		presence.setActivity(presenceData);
 	}
 });

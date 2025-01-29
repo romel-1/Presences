@@ -1,8 +1,9 @@
 const presence = new Presence({
-		clientId: "776113876605337660"
+		clientId: "776113876605337660",
 	}),
 	presenceData: PresenceData = {
-		largeImageKey: "mojevideo"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/M/MojeVideo/assets/logo.png",
 	};
 
 presence.on("UpdateData", async () => {
@@ -11,11 +12,11 @@ presence.on("UpdateData", async () => {
 });
 
 function RefreshData() {
-	if (document.getElementById("video-comment")) {
-		const mvTime = document.getElementById("mv-tm"),
+	if (document.querySelector("#video-comment")) {
+		const mvTime = document.querySelector("#mv-tm"),
 			[mvCaptionH1] = document
-				.getElementById("video-comment")
-				.getElementsByTagName("h1"),
+				.querySelector("#video-comment")
+				.querySelectorAll("h1"),
 			videoName = mvCaptionH1 ? mvCaptionH1.textContent : "Unknown video";
 
 		if (mvTime) {
@@ -26,9 +27,10 @@ function RefreshData() {
 			presenceData.state = videoName;
 		}
 		presenceData.smallImageKey =
-			document.getElementById("mv-pl").style.visibility !== "visible"
-				? "mvplaying"
-				: "mvpaused";
+			document.querySelector<HTMLElement>("#mv-pl").style.visibility !==
+			"visible"
+				? Assets.Play
+				: Assets.Pause;
 	} else {
 		let actualUrl = window.location.toString();
 		const actualTitle = document.title;
@@ -48,8 +50,7 @@ function RefreshData() {
 				extraPageNumber = 0;
 			const urlPieces = actualUrl.split("/");
 
-			for (let i = 0; i < urlPieces.length; i++) {
-				const urlPiece = urlPieces[i];
+			for (const urlPiece of urlPieces) {
 				if (urlPiece.includes("strana_")) {
 					extraPageNumber = parseInt(urlPiece.replace("strana_", "")) || 0;
 					extraPageNumber++;
@@ -63,7 +64,8 @@ function RefreshData() {
 				presenceData.state = `${extraPageNumber}.strana`;
 		}
 	}
-	presenceData.largeImageKey = "mojevideo";
+	presenceData.largeImageKey =
+		"https://cdn.rcd.gg/PreMiD/websites/M/MojeVideo/assets/logo.png";
 }
 
 setInterval(RefreshData, 1000);

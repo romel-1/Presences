@@ -1,14 +1,16 @@
 const presence = new Presence({
-		clientId: "784954155747377162"
+		clientId: "784954155747377162",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "latex",
-			smallImageKey: "whitelogo",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/O/Overleaf/assets/logo.png",
+			smallImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/O/Overleaf/assets/0.png",
 			smallImageText: "Overleaf",
-			startTimestamp: browsingTimestamp
+			startTimestamp: browsingTimestamp,
 		},
 		pth = window.location.pathname.toLowerCase();
 
@@ -16,13 +18,13 @@ presence.on("UpdateData", async () => {
 	if (pth === "/project" || pth === "/project/") {
 		presenceData.details = "Browsing Projects";
 		const actif = document
-				.getElementsByClassName("project-list-sidebar")[0]
-				.getElementsByClassName("active"),
-			maybecustom = actif[0].getElementsByClassName("name ng-binding");
+				.querySelectorAll(".project-list-sidebar")[0]
+				.querySelectorAll(".active"),
+			maybecustom = actif[0].querySelectorAll(".name.ng-binding");
 		if (maybecustom.length !== 0)
 			presenceData.state = maybecustom[0].textContent;
 		//Take care of (i) logo
-		else presenceData.state = actif[0].getElementsByTagName("a")[0].textContent;
+		else presenceData.state = actif[0].querySelectorAll("a")[0].textContent;
 	} else if (pth.includes("/project")) {
 		//Project page
 		presenceData.details = document.title.replace(
@@ -30,9 +32,9 @@ presence.on("UpdateData", async () => {
 			""
 		);
 		presenceData.state = document
-			.getElementsByClassName("file-tree-list")[0]
-			.getElementsByClassName("selected")[0]
-			.getElementsByTagName("span")[0].textContent;
+			.querySelectorAll(".file-tree-list")[0]
+			.querySelectorAll(".selected")[0]
+			.querySelectorAll("span")[0].textContent;
 	} else if (pth.includes("/learn")) {
 		//Documentation
 		presenceData.details = "Browsing Documentation";

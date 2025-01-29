@@ -1,9 +1,12 @@
 const presence = new Presence({
-	clientId: "620204628608417832"
+	clientId: "620204628608417832",
 });
 
 presence.on("UpdateData", async () => {
-	const presenceData: PresenceData = { largeImageKey: "icon" },
+	const presenceData: PresenceData = {
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/N/Nightwave%20Plaza/assets/logo.png",
+		},
 		playerTitle: HTMLDivElement = document.querySelector("div.player-title"),
 		playerArtist: HTMLDivElement = document.querySelector("div.player-artist"),
 		playerTime: HTMLDivElement = document.querySelector("div.player-time"),
@@ -16,9 +19,9 @@ presence.on("UpdateData", async () => {
 		songInfo: HTMLDivElement = document.querySelector(".p-2.song-info");
 
 	if (songInfo) {
-		const details: NodeListOf<HTMLDivElement> =
-				songInfo.querySelectorAll(".mb-1"),
-			[artist, album, title] = [...details].map(e => e.textContent);
+		const [artist, album, title] = [...songInfo.querySelectorAll(".mb-1")].map(
+			e => e.textContent
+		);
 		if (artist && album && title) {
 			presenceData.details = `Looking at ${title.substring(
 				8
@@ -39,12 +42,12 @@ presence.on("UpdateData", async () => {
 		if (playBackStatus) {
 			switch (playBackStatus.textContent) {
 				case "Play": {
-					presenceData.smallImageKey = "play";
+					presenceData.smallImageKey = Assets.Play;
 					if (listeners) presenceData.smallImageText = listeners.textContent;
 					break;
 				}
 				case "Stop": {
-					presenceData.smallImageKey = "pause";
+					presenceData.smallImageKey = Assets.Pause;
 					if (listeners) presenceData.smallImageText = listeners.textContent;
 					break;
 				}
@@ -58,10 +61,8 @@ presence.on("UpdateData", async () => {
 				.split("/")
 				.map(time => presence.timestampFromFormat(time));
 
-			[, presenceData.endTimestamp] = presence.getTimestamps(
-				currentTime,
-				duration
-			);
+			[presenceData.startTimestamp, presenceData.endTimestamp] =
+				presence.getTimestamps(currentTime, duration);
 		}
 	}
 

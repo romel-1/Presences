@@ -1,9 +1,9 @@
 const presence = new Presence({
-		clientId: "639131130703904808"
+		clientId: "639131130703904808",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused"
+		play: "general.playing",
+		pause: "general.paused",
 	}),
 	pages: { [k: string]: string } = {
 		"/": "Homepage",
@@ -41,34 +41,30 @@ const presence = new Presence({
 		"/home/my-courses/search": "My Courses",
 		"/home/my-courses/collections": "My Courses (Collections)",
 		"/home/my-courses/wishlist": "My Courses (Wishlist)",
-		"/home/my-courses/archived": "My Courses (Archived)"
+		"/home/my-courses/archived": "My Courses (Archived)",
 	};
 
 presence.on("UpdateData", async () => {
 	const page = document.location.pathname,
 		video = document.querySelector("video"),
 		presenceData: PresenceData = {
-			largeImageKey: "ud-logo",
-			startTimestamp: Math.floor(Date.now() / 1000)
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/U/Udemy/assets/logo.png",
+			startTimestamp: Math.floor(Date.now() / 1000),
 		};
 
 	if (page.includes("/courses/search")) {
 		presenceData.details = "Searching for:";
-		presenceData.smallImageKey = "search";
+		presenceData.smallImageKey = Assets.Search;
 		presenceData.state =
 			new URLSearchParams(location.search).get("q")?.split("+")?.join(" ") ||
 			"Something";
 	} else if (page.includes("/courses/")) {
-		presenceData.smallImageKey = "search";
+		presenceData.smallImageKey = Assets.Search;
 		presenceData.state =
 			document.querySelector("div h1[class*=category--heading-primary] a")
 				?.textContent || "Unknown Category";
 	} else if (page.includes("/course/") && video && video.currentTime) {
-		const [, endTimestamp] = presence.getTimestamps(
-			Math.floor(video.currentTime),
-			Math.floor(video.duration)
-		);
-
 		presenceData.details =
 			document.querySelector("header h1[data-purpose=course-header-title] a")
 				?.textContent || "Unknown Course";
@@ -80,12 +76,15 @@ presence.on("UpdateData", async () => {
 				?.textContent ||
 			"Unknown Episode";
 
-		presenceData.smallImageKey = video.paused ? "pause" : "play";
+		presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play;
 		presenceData.smallImageText = video.paused
 			? (await strings).pause
 			: (await strings).play;
 
-		if (!isNaN(endTimestamp)) presenceData.endTimestamp = endTimestamp;
+		if (!isNaN(video.currentTime)) {
+			[presenceData.startTimestamp, presenceData.endTimestamp] =
+				presence.getTimestampsfromMedia(video);
+		}
 
 		if (video.paused) {
 			delete presenceData.startTimestamp;

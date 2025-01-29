@@ -1,19 +1,20 @@
 const presence = new Presence({
-		clientId: "835652520637890620"
+		clientId: "835652520637890620",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "logo",
-			startTimestamp: browsingTimestamp
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/P/PodcastAddict/assets/logo.png",
+			startTimestamp: browsingTimestamp,
 		},
-		{ pathname } = document.location;
+		{ pathname, search } = document.location;
 
-	if (pathname === "/" && document.location.search.substr(0, 2) === "?q") {
+	if (pathname === "/" && search.substr(0, 2) === "?q") {
 		presenceData.details = "Searching:";
 		presenceData.state = document.querySelector(".caption").textContent;
-		presenceData.smallImageKey = "search";
+		presenceData.smallImageKey = Assets.Search;
 	} else if (pathname === "/") presenceData.details = "Viewing the homepage";
 	else if (pathname.startsWith("/app"))
 		presenceData.details = "Reading the app page";
@@ -36,9 +37,9 @@ presence.on("UpdateData", async () => {
 	else if (pathname.startsWith("/podcast")) {
 		presenceData.details = "Viewing:";
 		presenceData.state = document.querySelector(".caption").textContent;
-		presenceData.smallImageKey = "view";
+		presenceData.smallImageKey = Assets.Viewing;
 		presenceData.buttons = [
-			{ label: "View Podcast", url: window.location.href }
+			{ label: "View Podcast", url: window.location.href },
 		];
 	} else if (pathname.startsWith("/episode")) {
 		const elapsedTime = presence.timestampFromFormat(
@@ -46,7 +47,7 @@ presence.on("UpdateData", async () => {
 		);
 
 		presenceData.buttons = [
-			{ label: "Listen Along", url: window.location.href }
+			{ label: "Listen Along", url: window.location.href },
 		];
 		presenceData.details = document.querySelector(".pure-button").textContent;
 		presenceData.state = document.querySelector(".title").textContent;
@@ -55,14 +56,15 @@ presence.on("UpdateData", async () => {
 				.querySelector("#play-pause-button")
 				.classList.contains("fa-play-circle")
 		) {
-			[, presenceData.endTimestamp] = presence.getTimestamps(
-				elapsedTime,
-				presence.timestampFromFormat(
-					document.querySelector("#remainingTime").textContent.substr(1)
-				) + elapsedTime
-			);
-			presenceData.smallImageKey = "play";
-		} else presenceData.smallImageKey = "pause";
+			[presenceData.startTimestamp, presenceData.endTimestamp] =
+				presence.getTimestamps(
+					elapsedTime,
+					presence.timestampFromFormat(
+						document.querySelector("#remainingTime").textContent.substr(1)
+					) + elapsedTime
+				);
+			presenceData.smallImageKey = Assets.Play;
+		} else presenceData.smallImageKey = Assets.Pause;
 	}
 	presence.setActivity(presenceData);
 });

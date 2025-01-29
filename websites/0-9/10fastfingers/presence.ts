@@ -1,14 +1,15 @@
 const presence = new Presence({
-		clientId: "895022531868774451"
+		clientId: "895022531868774451",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "typinglogo",
-			startTimestamp: browsingTimestamp
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/0-9/10fastfingers/assets/logo.png",
+			startTimestamp: browsingTimestamp,
 		},
-		[, end] = presence.getTimestamps(
+		[start, end] = presence.getTimestamps(
 			presence.timestampFromFormat("00:00"),
 			presence.timestampFromFormat("1:00")
 		);
@@ -25,7 +26,7 @@ presence.on("UpdateData", async () => {
 				document.querySelector("#switch-typing-test-language").textContent
 			} | ${document.querySelector("#wpm").textContent.split("(")[0]} `;
 		} else {
-			presenceData.endTimestamp = end;
+			[presenceData.startTimestamp, presenceData.endTimestamp] = [start, end];
 			presenceData.details = "Doing a typing test:";
 			presenceData.state = `In ${
 				document.querySelector("#switch-typing-test-language").textContent
@@ -61,8 +62,7 @@ presence.on("UpdateData", async () => {
 			presenceData.details = "Doing a competition";
 		}
 	} else if (document.location.pathname.includes("/text/")) {
-		const timer = document.querySelector("#time").textContent;
-		if (timer === "00:00")
+		if (document.querySelector("#time").textContent === "00:00")
 			presenceData.details = "Waiting to start a text practice";
 		else {
 			const finalTime = document.querySelector(".col-md-6 > p > strong");

@@ -1,5 +1,5 @@
 const presence = new Presence({
-	clientId: "673322920809988120"
+	clientId: "673322920809988120",
 });
 
 function parseQueryString(queryString?: string): { [key: string]: string } {
@@ -7,18 +7,28 @@ function parseQueryString(queryString?: string): { [key: string]: string } {
 
 	const params: { [key: string]: string } = {},
 		queries = queryString.split("&");
-	queries.forEach((indexQuery: string) => {
+	for (const indexQuery of queries) {
 		const indexPair = indexQuery.split("=");
 		params[decodeURIComponent(indexPair[0])] = decodeURIComponent(
 			indexPair.length > 1 ? indexPair[1] : ""
 		);
-	});
+	}
 	return params;
+}
+
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/R/RootMe/assets/logo.png",
+	Ctf = "https://cdn.rcd.gg/PreMiD/websites/R/RootMe/assets/0.png",
+	Chall = "https://cdn.rcd.gg/PreMiD/websites/R/RootMe/assets/1.png",
+	Commu = "https://cdn.rcd.gg/PreMiD/websites/R/RootMe/assets/2.png",
+	Docu = "https://cdn.rcd.gg/PreMiD/websites/R/RootMe/assets/3.png",
+	Infos = "https://cdn.rcd.gg/PreMiD/websites/R/RootMe/assets/4.png",
+	Tools = "https://cdn.rcd.gg/PreMiD/websites/R/RootMe/assets/5.png",
 }
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "logo"
+			largeImageKey: Assets.Logo,
 		},
 		route = document.location.pathname.split("/");
 
@@ -48,7 +58,7 @@ presence.on("UpdateData", async () => {
 		else if (parseQueryString(document.location.hash).page === "faq")
 			presenceData.state = document.querySelector("h1.crayon").textContent;
 
-		presenceData.smallImageKey = "reading";
+		presenceData.smallImageKey = Assets.Reading;
 		switch (
 			document.querySelector("img.grayscale").getAttribute("alt") ||
 			document.querySelector("img.grayscale").getAttribute("title")
@@ -69,30 +79,30 @@ presence.on("UpdateData", async () => {
 				break;
 		}
 	} else if (document.location.pathname.includes("/Challenges/")) {
-		presenceData.smallImageKey = "chall";
+		presenceData.smallImageKey = Assets.Chall;
 		presenceData.smallImageText = "Challenges";
 		presenceData.details = route[3]
-			? `${route[2]} - ${route[3].replace(/-/g, " ")}`
+			? `${route[2]} - ${route[3].replaceAll("-", " ")}`
 			: `${route[2]}`;
 		presenceData.state = !route[4]
 			? "Navigating..."
 			: document.querySelector(".crayon").textContent;
 	} else if (document.location.pathname.includes("/Capture-The-Flag/")) {
-		presenceData.smallImageKey = "ctf";
+		presenceData.smallImageKey = Assets.Ctf;
 		presenceData.smallImageText = "Capture The Flag";
 		presenceData.details = route[3]
-			? `${route[2].replace(/-/g, " ")} - ${route[3].replace(/-/g, " ")}`
-			: route[2].replace(/-/g, " ");
+			? `${route[2].replaceAll("-", " ")} - ${route[3].replaceAll("-", " ")}`
+			: route[2].replaceAll("-", " ");
 		presenceData.state = "Navigating...";
 	} else if (
 		document.location.pathname.includes("/Communaute/") ||
 		document.location.pathname.includes("/Comunidad/") ||
 		document.location.pathname.includes("/Community/")
 	) {
-		presenceData.smallImageKey = "commu";
+		presenceData.smallImageKey = Assets.Commu;
 		presenceData.smallImageText = "Communaute";
 		presenceData.details = route[3]
-			? `${route[2]} - ${route[3].replace(/-/g, " ")}`
+			? `${route[2]} - ${route[3].replaceAll("-", " ")}`
 			: route[2];
 		presenceData.state = "Navigating...";
 	} else if (
@@ -101,29 +111,29 @@ presence.on("UpdateData", async () => {
 		document.location.pathname.includes("/Documentacion/") ||
 		document.location.pathname.includes("/Docs/")
 	) {
-		presenceData.smallImageKey = "docu";
+		presenceData.smallImageKey = Assets.Docu;
 		presenceData.smallImageText = "Documentation";
 		if (route[3] !== "Reseaux") {
 			presenceData.details = route[3]
-				? `${route[2]} - ${route[3].replace(/-/g, " ")}`
+				? `${route[2]} - ${route[3].replaceAll("-", " ")}`
 				: `${route[2]}`;
 			presenceData.state = !route[4]
 				? "Navigating..."
-				: route[4].replace(/-/g, " ");
+				: route[4].replaceAll("-", " ");
 		} else {
 			presenceData.details = route[4]
 				? `${route[2]} - ${route[3]} > ${route[4]}`
 				: `${route[2]} - ${route[3]}`;
 			presenceData.state = !route[5]
 				? "Navigating..."
-				: route[5].replace(/-/g, " ");
+				: route[5].replaceAll("-", " ");
 		}
 	} else if (
 		document.location.pathname.includes("/Informations/") ||
 		document.location.pathname.includes("/Information/") ||
 		document.location.pathname.includes("/Info/")
 	) {
-		presenceData.smallImageKey = "infos";
+		presenceData.smallImageKey = Assets.Infos;
 		presenceData.smallImageText = "Informations";
 		presenceData.details = `${route[2]}`;
 		presenceData.state = !route[3]
@@ -134,12 +144,12 @@ presence.on("UpdateData", async () => {
 		document.location.pathname.includes("/Herramientas/") ||
 		document.location.pathname.includes("/Outils/")
 	) {
-		presenceData.smallImageKey = "tools";
+		presenceData.smallImageKey = Assets.Tools;
 		presenceData.smallImageText = "Tools";
 		presenceData.details = route[3]
-			? `${route[2]} - ${route[3].replace(/-/g, " ")}`
+			? `${route[2]} - ${route[3].replaceAll("-", " ")}`
 			: `${route[2]}`;
-		presenceData.state = !route[4] ? "Navigating..." : route[4];
+		presenceData.state = route[4] ?? "Navigating...";
 	} else {
 		presenceData.details = `Watching member : ${
 			document.querySelector("span.forum").textContent

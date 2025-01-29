@@ -1,159 +1,146 @@
 const presence = new Presence({
-		clientId: "928372793438011433"
+		clientId: "928372793438011433",
 	}),
 	browsingStamp = Math.floor(Date.now() / 1000);
+
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/J/Just%20Dance%20Now/assets/logo.png",
+}
 
 presence.on("UpdateData", async () => {
 	const [time, cover, roomCode] = await Promise.all([
 			presence.getSetting<boolean>("time"),
 			presence.getSetting<boolean>("cover"),
-			presence.getSetting<boolean>("roomCode")
+			presence.getSetting<boolean>("roomCode"),
 		]),
 		presenceData: PresenceData = {
-			largeImageKey: "logo",
-			startTimestamp: browsingStamp
-		};
+			largeImageKey: Assets.Logo,
+			startTimestamp: browsingStamp,
+		},
+		coverURL = document.querySelector<HTMLImageElement>(
+			`#section-${document
+				.querySelector(".selected")
+				?.getAttribute("section-id")} .item-selected .song__cover`
+		)?.src,
+		songTitle = document.querySelector(
+			`#section-${document
+				.querySelector(".selected")
+				?.getAttribute("section-id")} .item-selected .title`
+		)?.textContent,
+		roomCodeString = document.querySelector(".danceroom__number")?.textContent;
 
-	if (document.querySelector("html").className.includes("vip"))
-		presenceData.smallImageKey = "vip";
-	presenceData.smallImageText = "VIP";
-	if (document.querySelector("div.logo"))
+	if (document.querySelector("html").className.includes("vip")) {
+		presenceData.smallImageKey =
+			"https://cdn.rcd.gg/PreMiD/websites/J/Just%20Dance%20Now/assets/0.png";
+		presenceData.smallImageText = "VIP";
+	}
+	if (!document.querySelector("html").className.includes("state-"))
 		presenceData.details = "Viewing Homepage";
-	else if (
-		document.querySelector("html").className.includes("state-afterdance")
-	) {
-		presenceData.details = "Scores";
-		presenceData.state = document
-			.querySelector(".song-detail__title")
-			.firstElementChild.textContent.replace(" - ALTERNATE", "");
-		if (cover) {
-			presenceData.largeImageKey = (
-				document.querySelector(".item-selected").firstElementChild
-					.firstElementChild as HTMLImageElement
-			).src;
-		}
-		if (roomCode) {
-			presenceData.details = `Scores (${
-				document.querySelector(".danceroom__number").textContent
-			})`;
-		}
-	} else if (
-		document.querySelector("html").className.includes("state-tutorial")
-	) {
-		presenceData.details = "Tutorial";
-		presenceData.state = document
-			.querySelector(".song-detail__title")
-			.firstElementChild.textContent.replace(" - ALTERNATE", "");
-		if (cover) {
-			presenceData.largeImageKey = (
-				document.querySelector(".item-selected").firstElementChild
-					.firstElementChild as HTMLImageElement
-			).src;
-		}
-		if (roomCode) {
-			presenceData.details = `Tutorial (${
-				document.querySelector(".danceroom__number").textContent
-			})`;
-		}
-	} else if (document.querySelector("html").className.includes("state-dance")) {
-		presenceData.details = "Playing";
-		presenceData.state = document
-			.querySelector(".song-detail__title")
-			.firstElementChild.textContent.replace(" - ALTERNATE", "");
-		[presenceData.startTimestamp, presenceData.endTimestamp] =
-			presence.getTimestampsfromMedia(
-				document.getElementById("in-game_video") as HTMLVideoElement
-			);
-		if (cover) {
-			presenceData.largeImageKey = (
-				document.querySelector(".item-selected").firstElementChild
-					.firstElementChild as HTMLImageElement
-			).src;
-		}
-		if (roomCode) {
-			presenceData.details = `Playing (${
-				document.querySelector(".danceroom__number").textContent
-			})`;
-		}
-	} else if (
-		document.querySelector("html").className.includes("state-coachselection")
-	) {
-		presenceData.details = "Coach Selection";
-		presenceData.state = `${document
-			.querySelector(".coach-selection__details-song")
-			.textContent.replace(" - ALTERNATE", "")}`;
-		if (roomCode) {
-			presenceData.details = `Coach Selection (${
-				document.querySelector(".danceroom__number").textContent
-			})`;
-		}
-		if (cover) {
-			presenceData.largeImageKey = (
-				document.querySelector(".item-selected").firstElementChild
-					.firstElementChild as HTMLImageElement
-			).src;
-		}
-	} else if (
-		document.querySelector("html").className.includes("state-songselection") &&
-		document.querySelector<HTMLLIElement>(".selected").title === "Playlists"
-	) {
-		presenceData.details = `Browsing ${
-			document.querySelector(".selected").childNodes[3].textContent
-		}`;
-		if (
-			document.querySelector(".song-grid--title").textContent !== "Song Library"
+	else {
+		switch (
+			document.querySelector("html")?.className?.match(/state-([a-z]{0,15})/)[1]
 		) {
-			presenceData.state =
-				document.querySelector(".song-grid--title").textContent;
-			if (cover) {
-				presenceData.largeImageKey = (
-					document.querySelector(".playlist--banner__selected")
-						.firstElementChild as HTMLImageElement
-				).src;
+			case "afterdance": {
+				presenceData.details = "Scores";
+				presenceData.state = songTitle;
+				if (cover) presenceData.largeImageKey = coverURL;
+
+				if (roomCode) presenceData.details = `Scores (${roomCodeString})`;
+				break;
 			}
-		}
-		if (roomCode) {
-			presenceData.details = `Browsing ${
-				document.querySelector(".selected").childNodes[3].textContent
-			} (${document.querySelector(".danceroom__number").textContent})`;
-		}
-		if (document.querySelector(".item-selected")) {
-			presenceData.state = document
-				.querySelector(".song-detail__title")
-				.firstElementChild.textContent.replace(" - ALTERNATE", "");
-			if (cover) {
-				presenceData.largeImageKey = (
-					document.querySelector(".item-selected").firstElementChild
-						.firstElementChild as HTMLImageElement
-				).src;
+			case "tutorial": {
+				presenceData.details = "Tutorial";
+				presenceData.state = songTitle;
+				if (cover) presenceData.largeImageKey = coverURL;
+
+				if (roomCode) presenceData.details = `Tutorial (${roomCodeString})`;
+				break;
 			}
-		}
-	} else if (
-		document.querySelector("html").className.includes("state-songselection") &&
-		document.querySelector<HTMLLIElement>(".selected").title === "Songs"
-	) {
-		presenceData.details = `Browsing ${
-			document.querySelector(".selected").childNodes[3].textContent
-		}`;
-		if (document.querySelector(".item-selected")) {
-			presenceData.state = document
-				.querySelector(".song-detail__title")
-				.firstElementChild.textContent.replace(" - ALTERNATE", "");
-			if (cover) {
-				presenceData.largeImageKey = (
-					document.querySelector(".item-selected").firstElementChild
-						.firstElementChild as HTMLImageElement
-				).src;
+			case "dance": {
+				presenceData.details = "Playing";
+				presenceData.state = songTitle;
+				[presenceData.startTimestamp, presenceData.endTimestamp] =
+					presence.getTimestampsfromMedia(
+						document.querySelector<HTMLVideoElement>("#in-game_video")
+					);
+				if (cover) presenceData.largeImageKey = coverURL;
+
+				if (roomCode) presenceData.details = `Playing (${roomCodeString})`;
+				break;
 			}
-		}
-		if (roomCode) {
-			presenceData.details = `Browsing ${
-				document.querySelector(".selected").childNodes[3].textContent
-			} (${document.querySelector(".danceroom__number").textContent})`;
+			case "coachselection": {
+				presenceData.details = "Coach Selection";
+				presenceData.state = `${
+					document.querySelector(".coach-selection__details-song").textContent
+				}`;
+				if (roomCode)
+					presenceData.details = `Coach Selection (${roomCodeString})`;
+
+				if (cover) presenceData.largeImageKey = coverURL;
+				break;
+			}
+			case "songselection": {
+				if (
+					document
+						.querySelector<HTMLLIElement>(".selected")
+						.getAttribute("section-id") === "playlist"
+				) {
+					presenceData.details = `Browsing ${
+						document.querySelector(".selected > .tabs--text").textContent
+					}`;
+					presenceData.state = songTitle;
+					if (cover) {
+						presenceData.largeImageKey =
+							document.querySelector<HTMLImageElement>(
+								".playlist--banner__selected > img"
+							)?.src ?? Assets.Logo;
+					}
+					if (roomCode) {
+						presenceData.details = `Browsing ${
+							document.querySelector(".selected > .tabs--text").textContent
+						} (${roomCodeString})`;
+					}
+					if (document.querySelector("#section-playlist .item-selected")) {
+						presenceData.state = document.querySelector(
+							"#section-playlist .item-selected .title"
+						).textContent;
+						if (cover) presenceData.largeImageKey = coverURL;
+					}
+				} else if (
+					document
+						.querySelector<HTMLLIElement>(".selected")
+						.getAttribute("section-id") === "songlist"
+				) {
+					presenceData.details = `Browsing ${
+						document.querySelector(".selected > .tabs--text").textContent
+					}`;
+					if (document.querySelector("#section-songlist .item-selected")) {
+						presenceData.state = document.querySelector(
+							"#section-songlist .item-selected .title"
+						).textContent;
+						if (cover) presenceData.largeImageKey = coverURL;
+					}
+					if (roomCode) {
+						presenceData.details = `Browsing ${
+							document.querySelector(".selected > .tabs--text").textContent
+						} (${roomCodeString})`;
+					}
+				} else if (
+					document
+						.querySelector<HTMLLIElement>(".selected")
+						.getAttribute("section-id") === "leaderboard"
+				) {
+					presenceData.details = "Viewing leaderboard";
+					presenceData.state = document.querySelector(
+						"#leaderboard-tabs .selected"
+					).textContent;
+				}
+				break;
+			}
 		}
 	}
 
 	if (!time) delete presenceData.startTimestamp;
 
-	presence.setActivity(presenceData);
+	if (presenceData.details) presence.setActivity(presenceData);
 });

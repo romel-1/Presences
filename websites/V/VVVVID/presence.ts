@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "639916600031707149"
+		clientId: "639916600031707149",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
@@ -15,7 +15,8 @@ let hour: number,
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "vid"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/V/VVVVID/assets/logo.png",
 	};
 
 	if (document.location.hostname === "www.vvvvid.it") {
@@ -69,16 +70,18 @@ presence.on("UpdateData", async () => {
 					? false
 					: true;
 			if (paused === true) {
-				presenceData.smallImageKey = "pause";
+				presenceData.smallImageKey = Assets.Pause;
 				presenceData.smallImageText = "In pausa";
 			} else {
 				const [startTimestamp, endTimestamp] = presence.getTimestamps(
 					time,
 					time2
 				);
-				presenceData.startTimestamp = startTimestamp;
-				presenceData.endTimestamp = endTimestamp;
-				presenceData.smallImageKey = "play";
+				[presenceData.startTimestamp, presenceData.endTimestamp] = [
+					startTimestamp,
+					endTimestamp,
+				];
+				presenceData.smallImageKey = Assets.Play;
 				presenceData.smallImageText = "Riproducendo";
 			}
 

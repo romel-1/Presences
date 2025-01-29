@@ -1,9 +1,9 @@
 const presence = new Presence({
-		clientId: "641969062083035146"
+		clientId: "641969062083035146",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused"
+		play: "general.playing",
+		pause: "general.paused",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
@@ -17,7 +17,8 @@ let user: string,
 
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "sdarot"
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/S/Sdarot.TV/assets/logo.png",
 	};
 
 	if (
@@ -49,12 +50,14 @@ presence.on("UpdateData", async () => {
 		}
 
 		if (!isNaN(duration)) {
-			presenceData.smallImageKey = paused ? "pause" : "play";
+			presenceData.smallImageKey = paused ? Assets.Pause : Assets.Play;
 			presenceData.smallImageText = paused
 				? (await strings).pause
 				: (await strings).play;
-			presenceData.startTimestamp = startTimestamp;
-			presenceData.endTimestamp = endTimestamp;
+			[presenceData.startTimestamp, presenceData.endTimestamp] = [
+				startTimestamp,
+				endTimestamp,
+			];
 
 			presenceData.details = title;
 			presenceData.state = user;

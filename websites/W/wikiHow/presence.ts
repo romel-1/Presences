@@ -1,6 +1,10 @@
 const presence = new Presence({
-	clientId: "630570838084812801"
+	clientId: "630570838084812801",
 });
+
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/W/wikiHow/assets/logo.png",
+}
 
 presence.on("UpdateData", async () => {
 	const path = document.location.pathname,
@@ -22,10 +26,10 @@ presence.on("UpdateData", async () => {
 					? ` (${date.textContent.replace("Updated: ", "")})`
 					: ""
 			} `,
-			largeImageKey: "banner",
-			smallImageKey: "logo",
+			largeImageKey: Assets.Logo,
+			smallImageKey: Assets.Logo,
 			smallImageText: decodeURIComponent(document.location.href),
-			startTimestamp: Math.floor(Date.now() / 1000)
+			startTimestamp: Math.floor(Date.now() / 1000),
 		});
 	}
 
@@ -33,26 +37,28 @@ presence.on("UpdateData", async () => {
 		return presence.setActivity({
 			details: "Viewing a category:",
 			state: category.textContent,
-			largeImageKey: "banner",
-			smallImageKey: "logo",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/W/wikiHow/assets/logo.png",
+			smallImageKey: Assets.Logo,
 			smallImageText: decodeURIComponent(document.location.href),
-			startTimestamp: Math.floor(Date.now() / 1000)
+			startTimestamp: Math.floor(Date.now() / 1000),
 		});
 	}
 
 	if (path === "/index.php") {
 		// Note that I (EGGSY) didn't work on this part, I don't know if it's working on the main site but I'm sure it doesn't work on Spanish version.
-		const newTopic = document.getElementsByClassName("firstHeading")[0]
-			? document.getElementsByClassName("firstHeading")[0].textContent
+		const newTopic = document.querySelectorAll(".firstHeading")[0]
+			? document.querySelectorAll(".firstHeading")[0].textContent
 			: null;
 
 		return presence.setActivity({
 			details: "Editing/Writing How to",
-			state: `Topic: ${newTopic ? newTopic : "Unknown."} `,
-			largeImageKey: "banner",
-			smallImageKey: "logo",
+			state: `Topic: ${newTopic ?? "Unknown."} `,
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/W/wikiHow/assets/logo.png",
+			smallImageKey: Assets.Logo,
 			smallImageText: decodeURIComponent(document.location.href),
-			startTimestamp: Math.floor(Date.now() / 1000)
+			startTimestamp: Math.floor(Date.now() / 1000),
 		});
 	}
 
@@ -65,18 +71,20 @@ presence.on("UpdateData", async () => {
 		return presence.setActivity({
 			details: "Searching for:",
 			state: `${searching[0].toUpperCase() + searching.slice(1).toLowerCase()}`,
-			largeImageKey: "banner",
-			smallImageKey: "logo",
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/W/wikiHow/assets/logo.png",
+			smallImageKey: Assets.Logo,
 			smallImageText: "Searching...",
-			startTimestamp: Math.floor(Date.now() / 1000)
+			startTimestamp: Math.floor(Date.now() / 1000),
 		});
 	}
 
 	return presence.setActivity({
 		details: "Viewing a page:",
 		state: "Homepage",
-		largeImageKey: "banner",
-		smallImageKey: "logo",
-		startTimestamp: Math.floor(Date.now() / 1000)
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/W/wikiHow/assets/logo.png",
+		smallImageKey: Assets.Logo,
+		startTimestamp: Math.floor(Date.now() / 1000),
 	});
 });

@@ -1,5 +1,5 @@
 const presence = new Presence({
-	clientId: "745570917823807519"
+	clientId: "745570917823807519",
 });
 
 function translate(isMale: boolean) {
@@ -13,7 +13,7 @@ function translate(isMale: boolean) {
 	return {
 		default: refferGender(["גולש בסטיפס", "גולשת בסטיפס"]),
 		"/": {
-			main: "בעמוד הראשי"
+			main: "בעמוד הראשי",
 		},
 		ask: {
 			main: refferGender(["קורא שאלה", "קוראת שאלה"]),
@@ -23,79 +23,79 @@ function translate(isMale: boolean) {
 			removeAsk: removingQuestion,
 			removeAns: removingAnswer,
 			editAsk: editingQuestion,
-			editAns: editingAnswer
+			editAns: editingAnswer,
 		},
 		explore: {
 			"/": {
 				main: "צופה בשאלות חדשות",
 				report: reporting,
 				remove: removingQuestion,
-				edit: editingQuestion
+				edit: editingQuestion,
 			},
 			hot: {
 				main: "צופה בשאלות החמות",
 				report: reporting,
 				remove: removingQuestion,
-				edit: editingQuestion
+				edit: editingQuestion,
 			},
 			me: {
 				main: refferGender(["צופה בשאלות ששאל", "צופה בשאלות ששאלה"]),
 				report: reporting,
 				remove: removingQuestion,
-				edit: editingQuestion
+				edit: editingQuestion,
 			},
-			unknown: "צופה בשאלות"
+			unknown: "צופה בשאלות",
 		},
 		channel: {
 			main: "צופה בשאלות בחדר %channel%",
 			report: reporting,
 			remove: removingQuestion,
-			edit: editingQuestion
+			edit: editingQuestion,
 		},
 		"pen-friends": {
 			main: "בחברים לעט",
 			remove: refferGender(["מוחק מסר בחברים לעט", "מוחקת מסר בחברים לעט"]),
-			write: refferGender(["כותב מסר בחברים לעט", "כותבת מסר בחברים לעט"])
+			write: refferGender(["כותב מסר בחברים לעט", "כותבת מסר בחברים לעט"]),
 		},
 		reports: {
 			main: "ברשימת הדיווחים",
 			removeAsk: removingQuestion,
 			removeAns: removingAnswer,
 			editAsk: editingQuestion,
-			editAns: editingAnswer
+			editAns: editingAnswer,
 		},
 		settings: {
-			main: "בהגדרות"
+			main: "בהגדרות",
 		},
 		topic: {
 			main: "צופה בשאלות בנושא %topic%",
 			report: reporting,
 			remove: removingQuestion,
-			edit: editingQuestion
+			edit: editingQuestion,
 		},
 		profile: {
 			main: "בפרופיל של %nickname%",
 			scroll: "בקיר התודות של %nickname%",
-			remove: refferGender(["מוחק מסר בקיר התודות", "מוחקת מסר בקיר התודות"])
+			remove: refferGender(["מוחק מסר בקיר התודות", "מוחקת מסר בקיר התודות"]),
 		},
 		notifications: {
-			main: "צופה בהתראות"
+			main: "צופה בהתראות",
 		},
 		messages: {
 			"/": {
 				main: "במסרים",
-				additionalPage: refferGender(["מסתכל באנשי הקשר", "מסתכלת באנשי הקשר"])
+				additionalPage: refferGender(["מסתכל באנשי הקשר", "מסתכלת באנשי הקשר"]),
 			},
 			any: {
 				// /messages/<user_id> //
-				main: "בשיחה עם %nickname%"
-			}
+				main: "בשיחה עם %nickname%",
+			},
 		},
 		post: {
 			ask: {
-				main: refferGender(["כותב שאלה", "כותבת שאלה"])
-			}
-		}
+				main: refferGender(["כותב שאלה", "כותבת שאלה"]),
+			},
+		},
 	};
 }
 
@@ -117,6 +117,12 @@ fetch("https://stips.co.il/api?name=user.get_app_user").then(resp =>
 		else isMale = false;
 	})
 );
+
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/S/Stips/assets/logo.png",
+	StipspiLight = "https://cdn.rcd.gg/PreMiD/websites/S/Stips/assets/0.png",
+	StipspinDark = "https://cdn.rcd.gg/PreMiD/websites/S/Stips/assets/1.png",
+}
 
 // main loop
 presence.on("UpdateData", () => {
@@ -185,24 +191,24 @@ presence.on("UpdateData", () => {
 			if (isDelete) details = xplrObj["/"].remove;
 			if (isEdit) details = xplrObj["/"].edit;
 
-			if (!details) {
-				// eslint-disable-next-line no-prototype-builtins
-				if (xplrObj.hasOwnProperty(PathSecond)) {
-					// seems like xplrObj[PathSecond] won't work
-					// let's do it manually then >'-'<
-					switch (PathSecond) {
-						case "/":
-							details = xplrObj["/"].main;
-							break;
-						case "hot":
-							details = xplrObj.hot.main;
-							break;
-						case "me":
-							details = xplrObj.me.main;
-							break;
-						default:
-							details = xplrObj.unknown;
-					}
+			if (
+				!details && // eslint-disable-next-line no-prototype-builtins
+				xplrObj.hasOwnProperty(PathSecond)
+			) {
+				// seems like xplrObj[PathSecond] won't work
+				// let's do it manually then >'-'<
+				switch (PathSecond) {
+					case "/":
+						details = xplrObj["/"].main;
+						break;
+					case "hot":
+						details = xplrObj.hot.main;
+						break;
+					case "me":
+						details = xplrObj.me.main;
+						break;
+					default:
+						details = xplrObj.unknown;
 				}
 			}
 
@@ -242,10 +248,9 @@ presence.on("UpdateData", () => {
 			isEdit = elemExists(".edit-view");
 
 			if (isDelete) {
-				isAns =
-					document
-						.querySelector("app-item-editor-delete .text-title")
-						.textContent.indexOf("תשובה") !== -1;
+				isAns = document
+					.querySelector("app-item-editor-delete .text-title")
+					.textContent.includes("תשובה");
 			}
 			if (isEdit) isAns = elemExists(".edit-view + mat-card.item-type-ans");
 
@@ -340,9 +345,9 @@ presence.on("UpdateData", () => {
 
 	presence.setActivity({
 		details: details ?? translate(isMale).default,
-		largeImageKey: "stips",
-		smallImageKey: hasDark ? "stipspin_dark" : "stipspin_light",
+		largeImageKey: Assets.Logo,
+		smallImageKey: hasDark ? Assets.StipspinDark : Assets.StipspiLight,
 		startTimestamp: elapsed,
-		smallImageText
+		smallImageText,
 	});
 });

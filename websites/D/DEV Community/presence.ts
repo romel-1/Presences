@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "829466407321731082"
+		clientId: "829466407321731082",
 	}),
 	timestamp = Math.floor(Date.now() / 1000);
 
@@ -26,7 +26,7 @@ function isShop(): boolean {
 }
 
 function isProfile(): boolean {
-	if (document.getElementsByClassName("profile-header__meta").length === 1) {
+	if (document.querySelectorAll(".profile-header__meta").length === 1) {
 		authorUrl = document.location.href.toString();
 		authorName = document.querySelector(
 			"#page-content-inner > div.brand-bg > div > header > div.profile-header__details > h1"
@@ -37,8 +37,8 @@ function isProfile(): boolean {
 }
 function isArticle(): boolean {
 	if (
-		document.getElementsByClassName("article-wrapper").length === 1 &&
-		document.getElementsByClassName("crayons-article__video").length === 0
+		document.querySelectorAll(".article-wrapper").length === 1 &&
+		document.querySelectorAll(".crayons-article__video").length === 0
 	) {
 		articleTitle = document.querySelector(
 			"#main-title > div.crayons-article__header__meta > h1"
@@ -58,8 +58,8 @@ function isArticle(): boolean {
 
 function isVideo(): boolean {
 	if (
-		document.getElementsByClassName("article-wrapper").length === 1 &&
-		document.getElementsByClassName("crayons-article__video").length === 1
+		document.querySelectorAll(".article-wrapper").length === 1 &&
+		document.querySelectorAll(".crayons-article__video").length === 1
 	) {
 		articleTitle = document.querySelector(
 			"#main-title > div.crayons-article__header__meta > h1"
@@ -78,9 +78,7 @@ function isVideo(): boolean {
 }
 
 function isPodcast(): boolean {
-	if (
-		document.getElementsByClassName("podcast-episode-container").length === 1
-	) {
+	if (document.querySelectorAll(".podcast-episode-container").length === 1) {
 		podcastTitle = document.querySelector("h1").textContent;
 		authorName = document.querySelector("div.title > h2 > a").textContent;
 		authorUrl = (<HTMLAnchorElement>(
@@ -90,14 +88,18 @@ function isPodcast(): boolean {
 	}
 }
 
+const assets: Record<string, string> = {
+	play: Assets.Play,
+	pause: Assets.Pause,
+};
+
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-			largeImageKey: "lg",
-			startTimestamp: timestamp
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/D/DEV%20Community/assets/logo.png",
+			startTimestamp: timestamp,
 		},
 		buttons = await presence.getSetting<boolean>("buttons");
-
-	let endTimestamp = 0;
 
 	switch (true) {
 		case isShop():
@@ -105,32 +107,33 @@ presence.on("UpdateData", async () => {
 			break;
 		case isProfile():
 			presenceData.details = authorName;
-			presenceData.smallImageKey = "user";
+			presenceData.smallImageKey =
+				"https://cdn.rcd.gg/PreMiD/websites/D/DEV%20Community/assets/0.png";
 			presenceData.smallImageText = "Profile";
 			if (buttons) {
 				presenceData.buttons = [
 					{
 						label: "View Profile",
-						url: document.location.origin + authorUrl
-					}
+						url: document.location.origin + authorUrl,
+					},
 				];
 			}
 			break;
 		case isArticle():
 			presenceData.details = articleTitle;
 			presenceData.state = authorName;
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			if (buttons) {
 				presenceData.buttons = [
 					{
 						label: "View Article",
-						url: document.location.href
+						url: document.location.href,
 					},
 					{
 						label: "View Author",
-						url: document.location.origin + authorUrl
-					}
+						url: document.location.origin + authorUrl,
+					},
 				];
 			}
 			break;
@@ -141,12 +144,12 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "View Video",
-						url: document.location.href
+						url: document.location.href,
 					},
 					{
 						label: "View Author",
-						url: document.location.origin + authorUrl
-					}
+						url: document.location.origin + authorUrl,
+					},
 				];
 			}
 			contentStateKey = (<HTMLVideoElement>document.querySelector("video"))
@@ -155,15 +158,13 @@ presence.on("UpdateData", async () => {
 				: "play";
 			contentStateText = contentStateKey === "pause" ? "Paused" : "Playing";
 
-			presenceData.smallImageKey = contentStateKey;
+			presenceData.smallImageKey = assets[contentStateKey];
 			presenceData.smallImageText = contentStateText;
 
-			[, endTimestamp] = presence.getTimestampsfromMedia(
-				document.querySelector("video")
-			);
-			if (contentStateKey === "play" && endTimestamp > 0)
-				presenceData.endTimestamp = endTimestamp;
-			else {
+			if (contentStateKey === "play") {
+				[presenceData.startTimestamp, presenceData.endTimestamp] =
+					presence.getTimestampsfromMedia(document.querySelector("video"));
+			} else {
 				delete presenceData.startTimestamp;
 				delete presenceData.endTimestamp;
 			}
@@ -176,29 +177,27 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "View Podcast",
-						url: document.location.href
+						url: document.location.href,
 					},
 					{
 						label: "View Author",
-						url: document.location.origin + authorUrl
-					}
+						url: document.location.origin + authorUrl,
+					},
 				];
 			}
-			contentStateKey = (<HTMLAudioElement>document.getElementById("audio"))
+			contentStateKey = (<HTMLAudioElement>document.querySelector("#audio"))
 				.paused
 				? "pause"
 				: "play";
 			contentStateText = contentStateKey === "pause" ? "Paused" : "Listening";
 
-			presenceData.smallImageKey = contentStateKey;
+			presenceData.smallImageKey = assets[contentStateKey];
 			presenceData.smallImageText = contentStateText;
 
-			[, endTimestamp] = presence.getTimestampsfromMedia(
-				document.querySelector("#audio")
-			);
-			if (contentStateKey === "play" && endTimestamp > 0)
-				presenceData.endTimestamp = endTimestamp;
-			else {
+			if (contentStateKey === "play") {
+				[presenceData.startTimestamp, presenceData.endTimestamp] =
+					presence.getTimestampsfromMedia(document.querySelector("video"));
+			} else {
 				delete presenceData.startTimestamp;
 				delete presenceData.endTimestamp;
 			}
@@ -235,7 +234,7 @@ presence.on("UpdateData", async () => {
 			break;
 		case pathIncludes("/new"):
 			presenceData.details = "Writing a Post";
-			presenceData.smallImageKey = "writing";
+			presenceData.smallImageKey = Assets.Writing;
 			presenceData.smallImageText = "Writing";
 			break;
 		case pathIncludes("/readinglist"):
@@ -248,8 +247,8 @@ presence.on("UpdateData", async () => {
 				presenceData.buttons = [
 					{
 						label: "View Series",
-						url: document.location.href
-					}
+						url: document.location.href,
+					},
 				];
 			}
 			break;
@@ -260,7 +259,7 @@ presence.on("UpdateData", async () => {
 			searchLength = document.querySelector("#substories").children.length;
 			presenceData.details = `Search: ${searchTerm}`;
 			presenceData.state = `${searchLength} Results`;
-			presenceData.smallImageKey = "search";
+			presenceData.smallImageKey = Assets.Search;
 			presenceData.smallImageText = "Searching...";
 			break;
 		case pathIncludes("/settings"):
@@ -277,37 +276,37 @@ presence.on("UpdateData", async () => {
 			break;
 		case pathIncludes("/code-of-conduct"):
 			presenceData.details = "Code of Conduct";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			break;
 		case pathIncludes("/faq"):
 			presenceData.details = "FAQ 🤔";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			break;
 		case pathIncludes("/sponsors"):
 			presenceData.details = "Sponsors";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			break;
 		case pathIncludes("/about"):
 			presenceData.details = "About";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			break;
 		case pathIncludes("/privacy"):
 			presenceData.details = "Privacy";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			break;
 		case pathIncludes("/terms"):
 			presenceData.details = "Terms and Conditions";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			break;
 		case pathIncludes("/contact"):
 			presenceData.details = "Contact";
-			presenceData.smallImageKey = "reading";
+			presenceData.smallImageKey = Assets.Reading;
 			presenceData.smallImageText = "Reading";
 			break;
 		case pathIncludes("/onboarding"):
@@ -316,6 +315,5 @@ presence.on("UpdateData", async () => {
 		default:
 			presenceData.details = "General Feed";
 	}
-	if (endTimestamp === 0) delete presenceData.endTimestamp;
 	presence.setActivity(presenceData);
 });

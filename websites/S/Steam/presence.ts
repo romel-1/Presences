@@ -1,5 +1,5 @@
 const presence = new Presence({
-		clientId: "612299892764966923"
+		clientId: "612299892764966923",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000),
 	subsection = new URL(document.location.href).searchParams.get("subsection");
@@ -15,7 +15,7 @@ let AppName: HTMLElement,
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
 		details: "Unknown page",
-		largeImageKey: "lg"
+		largeImageKey: "https://cdn.rcd.gg/PreMiD/websites/S/Steam/assets/logo.png",
 	};
 
 	if (document.location.hostname === "steamcommunity.com") {
@@ -64,7 +64,7 @@ presence.on("UpdateData", async () => {
 
 			presenceData.startTimestamp = browsingTimestamp;
 
-			presenceData.smallImageKey = "search";
+			presenceData.smallImageKey = Assets.Search;
 		} else if (document.location.pathname.includes("/app/")) {
 			if (document.location.pathname.includes("/workshop/")) {
 				AppName = document.querySelector(
@@ -248,8 +248,8 @@ presence.on("UpdateData", async () => {
 		} else if (document.location.pathname.includes("/genre")) {
 			const parts = document.location.href.split("/");
 
-			presenceData.state = `Genre: ${parts[parts.length - 2].replace(
-				/%20/g,
+			presenceData.state = `Genre: ${parts[parts.length - 2].replaceAll(
+				"%20",
 				" "
 			)}`;
 
@@ -270,8 +270,8 @@ presence.on("UpdateData", async () => {
 			const parts = document.location.href.split("/");
 
 			presenceData.state = parts[parts.length - 2]
-				.replace(/%20/g, " ")
-				.replace(/%26/g, "&");
+				.replaceAll("%20", " ")
+				.replaceAll("%26", "&");
 
 			presenceData.startTimestamp = browsingTimestamp;
 		} else if (document.location.pathname.includes("/macos")) {
@@ -329,7 +329,7 @@ presence.on("UpdateData", async () => {
 
 			presenceData.startTimestamp = browsingTimestamp;
 
-			presenceData.smallImageKey = "search";
+			presenceData.smallImageKey = Assets.Search;
 		}
 	}
 

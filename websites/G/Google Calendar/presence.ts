@@ -1,12 +1,13 @@
 const presence = new Presence({
-		clientId: "671599195462959104"
+		clientId: "671599195462959104",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
 
 presence.on("UpdateData", () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "gcalendar",
-		startTimestamp: browsingTimestamp
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/G/Google%20Calendar/assets/logo.png",
+		startTimestamp: browsingTimestamp,
 	};
 
 	if (document.location.pathname === "/")
@@ -17,13 +18,13 @@ presence.on("UpdateData", () => {
 			presenceData.state = document
 				.querySelector("head > title")
 				.textContent.replace("Google Calendar - ", "")
-				.replace(/,/g, " -");
+				.replaceAll(",", " -");
 		} else if (document.location.pathname.startsWith("/calendar/r/week")) {
 			presenceData.details = "Viewing the week schedule:";
 			presenceData.state = document
 				.querySelector("head > title")
 				.textContent.replace("Google Calendar - ", "")
-				.replace(/,/g, " -");
+				.replaceAll(",", " -");
 		} else if (document.location.pathname.startsWith("/calendar/r/month")) {
 			presenceData.details = "Viewing the month schedule:";
 			presenceData.state = document
@@ -46,7 +47,7 @@ presence.on("UpdateData", () => {
 			presenceData.details = "Searching the event:";
 			presenceData.state = document.location.href
 				.replace("https://calendar.google.com/calendar/r/search?q=", "")
-				.replace(/%20/g, " ");
+				.replaceAll("%20", " ");
 		} else if (document.location.pathname.startsWith("/calendar/r/trash"))
 			presenceData.details = "Browsing the Trash";
 		else if (document.location.pathname === "/calendar/r/settings")

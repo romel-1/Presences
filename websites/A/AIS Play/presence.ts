@@ -1,18 +1,18 @@
 const presence = new Presence({
-		clientId: "719865208515854369"
+		clientId: "719865208515854369",
 	}),
 	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		live: "presence.activity.live",
-		browsing: "presence.activity.browsing"
+		play: "general.playing",
+		pause: "general.paused",
+		live: "general.live",
+		browsing: "general.browsing",
 	});
 
 let video = {
 	current: 0,
 	duration: 0,
 	paused: true,
-	isLive: false
+	isLive: false,
 };
 
 presence.on(
@@ -27,15 +27,19 @@ presence.on(
 	}
 );
 
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/A/AIS%20Play/assets/logo.png",
+}
+
 presence.on("UpdateData", async () => {
 	const path = document.location.pathname;
 	if (path === "/portal/search") {
 		return presence.setActivity({
 			details: "Searching for :",
 			state: document.location.search.replace("?q=", ""),
-			largeImageKey: "logo",
-			smallImageKey: "search",
-			smallImageText: "Searching..."
+			largeImageKey: Assets.Logo,
+			smallImageKey: Assets.Search,
+			smallImageText: "Searching...",
 		});
 	}
 
@@ -43,11 +47,12 @@ presence.on("UpdateData", async () => {
 		return presence.setActivity({
 			details: "Browsing for :",
 			state: document.querySelector(".default-title").textContent || "",
-			largeImageKey: "logo"
+			largeImageKey:
+				"https://cdn.rcd.gg/PreMiD/websites/A/AIS%20Play/assets/logo.png",
 		});
 	}
 
-	const presenceData: PresenceData = { largeImageKey: "logo" };
+	const presenceData: PresenceData = { largeImageKey: Assets.Logo };
 	if (isNaN(video.duration) || video.duration <= 0) {
 		presenceData.details = "Browsing...";
 
@@ -73,10 +78,10 @@ presence.on("UpdateData", async () => {
 	} else if (Info.textContent) presenceData.details = Info.textContent;
 
 	presenceData.smallImageKey = video.paused
-		? "pause"
+		? Assets.Pause
 		: video.isLive
-		? "live"
-		: "play";
+		? Assets.Live
+		: Assets.Play;
 	presenceData.smallImageText = video.paused
 		? (await strings).pause
 		: video.isLive

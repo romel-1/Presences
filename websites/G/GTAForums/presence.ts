@@ -1,20 +1,20 @@
 const presence = new Presence({
-		clientId: "713726722671116330"
+		clientId: "713726722671116330",
 	}),
 	browsingTimestamp = Math.floor(Date.now() / 1000);
+
 presence.on("UpdateData", async () => {
 	const presenceData: PresenceData = {
-		largeImageKey: "logo",
-		startTimestamp: browsingTimestamp
+		largeImageKey:
+			"https://cdn.rcd.gg/PreMiD/websites/G/GTAForums/assets/logo.png",
+		startTimestamp: browsingTimestamp,
 	};
 
-	if (document.location.pathname === "/") {
+	if (document.location.pathname === "/")
 		presenceData.details = "Browsing the home page...";
-		presenceData.smallImageKey = "home";
-	} else if (document.location.pathname.startsWith("/settings")) {
+	else if (document.location.pathname.startsWith("/settings")) {
 		delete presenceData.details;
 		presenceData.details = "In settings...";
-		presenceData.smallImageKey = "settings";
 		presenceData.state = "Overview";
 		switch (document.location.pathname) {
 			case "/settings/email/":
@@ -36,14 +36,14 @@ presence.on("UpdateData", async () => {
 	} else if (document.location.pathname.startsWith("/profile/")) {
 		delete presenceData.details;
 		presenceData.details = "Browsing a profile...";
-		presenceData.state = document.getElementsByClassName(
-			"ipsType_reset ipsPageHead_barText"
+		presenceData.state = document.querySelectorAll(
+			".ipsType_reset.ipsPageHead_barText"
 		)[0].textContent;
 	} else if (document.location.pathname.startsWith("/forum/")) {
 		delete presenceData.details;
 		presenceData.details = "Browsing a category...";
 		presenceData.state =
-			document.getElementsByClassName("ipsType_pageTitle")[0].textContent;
+			document.querySelectorAll(".ipsType_pageTitle")[0].textContent;
 		if (document.location.href.match("/?do=add")) {
 			delete presenceData.details;
 			delete presenceData.state;
@@ -52,16 +52,16 @@ presence.on("UpdateData", async () => {
 	} else if (document.location.pathname.startsWith("/topic/")) {
 		delete presenceData.details;
 		presenceData.details = "Browsing a topic...";
-		presenceData.state = document.getElementsByClassName(
-			"ipsType_break ipsContained"
+		presenceData.state = document.querySelectorAll(
+			".ipsType_break.ipsContained"
 		)[0].textContent;
 	} else if (document.location.pathname.startsWith("/search/")) {
 		delete presenceData.details;
 		presenceData.details = "Searching...";
-		presenceData.smallImageKey = "search";
+		presenceData.smallImageKey = Assets.Search;
 		presenceData.state = `Looking${
 			document
-				.getElementsByClassName("ipsType_reset ipsType_large")[0]
+				.querySelectorAll(".ipsType_reset.ipsType_large")[0]
 				.textContent.split("results")[1]
 		}`;
 	} else {

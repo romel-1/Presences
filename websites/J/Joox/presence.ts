@@ -1,6 +1,10 @@
 const presence = new Presence({
-	clientId: "715116675346989096"
+	clientId: "715116675346989096",
 });
+
+const enum Assets {
+	Logo = "https://cdn.rcd.gg/PreMiD/websites/J/Joox/assets/0.png",
+}
 
 presence.on("UpdateData", async () => {
 	const player = Array.from(document.querySelectorAll("i")).find(x =>
@@ -33,11 +37,11 @@ presence.on("UpdateData", async () => {
 				state: author,
 				largeImageKey: cover
 					? document.querySelector<HTMLImageElement>(`img[alt="${title}"]`).src
-					: "icon",
-				smallImageKey: paused ? "pause" : "playing",
+					: Assets.Logo,
+				smallImageKey: paused ? Assets.Pause : Assets.Play,
 				smallImageText: paused ? "Paused" : "Playing",
 				startTimestamp: timestamps[0],
-				endTimestamp: timestamps[1]
+				endTimestamp: timestamps[1],
 			};
 
 		if (paused) {
