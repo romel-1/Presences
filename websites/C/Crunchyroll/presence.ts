@@ -1,188 +1,210 @@
+import { ActivityType, Assets } from 'premid'
+
 const presence = new Presence({
-	clientId: "608065709741965327"
-});
+  clientId: '608065709741965327',
+})
+
+enum ActivityAssets {
+  Logo = 'https://cdn.rcd.gg/PreMiD/websites/C/Crunchyroll/assets/logo.png',
+
+  OpenBook = 'https://cdn.rcd.gg/PreMiD/websites/C/Crunchyroll/assets/0.png',
+}
 
 async function getStrings() {
-	return presence.getStrings(
-		{
-			play: "presence.playback.playing",
-			pause: "presence.playback.paused",
-			browse: "presence.activity.browsing",
-			reading: "presence.activity.reading",
-			viewManga: "general.viewManga",
-			watchEpisode: "general.buttonViewEpisode",
-			viewSeries: "general.buttonViewSeries",
-			manga: "general.manga",
-			chapter: "general.chapter",
-			page: "general.page"
-		},
-		await presence.getSetting<string>("lang").catch(() => "en")
-	);
+  return presence.getStrings(
+    {
+      play: 'general.playing',
+      pause: 'general.paused',
+      browse: 'general.browsing',
+      reading: 'general.reading',
+      viewPage: 'general.viewPage',
+      viewManga: 'general.viewManga',
+      viewSeries: 'general.buttonViewSeries',
+      watchEpisode: 'general.buttonViewEpisode',
+      readingArticle: 'general.readingArticle',
+      viewCategory: 'general.viewCategory',
+      chapter: 'general.chapter',
+      search: 'general.search',
+      manga: 'general.manga',
+      page: 'general.page',
+    },
+    await presence.getSetting<string>('lang').catch(() => 'en'),
+  )
 }
 
-let strings: Awaited<ReturnType<typeof getStrings>>,
-	oldLang: string = null,
-	lastPlaybackState = null,
-	playback: boolean,
-	browsingTimestamp = Math.floor(Date.now() / 1000);
-
-if (lastPlaybackState !== playback) {
-	lastPlaybackState = playback;
-	browsingTimestamp = Math.floor(Date.now() / 1000);
-}
+let strings: Awaited<ReturnType<typeof getStrings>>
+let oldLang: string | null = null
+let playback: boolean = false
+const browsingTimestamp = Math.floor(Date.now() / 1000)
 
 let iFrameVideo: boolean,
-	currentTime: number,
-	duration: number,
-	paused: boolean;
+  currentTime: number,
+  duration: number,
+  paused: boolean
 
 interface iFrameData {
-	iFrameVideoData: {
-		iFrameVideo: boolean;
-		currTime: number;
-		dur: number;
-		paused: boolean;
-	};
+  iFrameVideoData: {
+    iFrameVideo: boolean
+    currTime: number
+    dur: number
+    paused: boolean
+  }
 }
 
-presence.on("iFrameData", (data: iFrameData) => {
-	playback = data.iFrameVideoData !== null ? true : false;
+presence.on('iFrameData', (inc: unknown) => {
+  const data = inc as iFrameData
+  playback = data.iFrameVideoData !== null
 
-	if (playback) {
-		({
-			iFrameVideo,
-			currTime: currentTime,
-			dur: duration,
-			paused
-		} = data.iFrameVideoData);
-	}
-});
+  if (playback) {
+    ({
+      iFrameVideo,
+      currTime: currentTime,
+      dur: duration,
+      paused,
+    } = data.iFrameVideoData)
+  }
+})
 
-presence.on("UpdateData", async () => {
-	const newLang = await presence.getSetting<string>("lang").catch(() => "en");
-	if (oldLang !== newLang || !strings) {
-		oldLang = newLang;
-		strings = await getStrings();
-	}
+presence.on('UpdateData', async () => {
+  const presenceData: PresenceData = {
+    largeImageKey: ActivityAssets.Logo,
+    type: ActivityType.Watching,
+  }
+  const { href, pathname } = window.location
+  const [newLang, showCover] = await Promise.all([
+    presence.getSetting<string>('lang').catch(() => 'en'),
+    presence.getSetting<boolean>('cover'),
+  ])
 
-	const presenceData: PresenceData = {
-		largeImageKey: "lg"
-	};
+  if (oldLang !== newLang || !strings) {
+    oldLang = newLang
+    strings = await getStrings()
+  }
 
-	if (!playback && document.location.pathname.includes("/manga")) {
-		if (document.location.pathname.includes("/read")) {
-			const title = document.querySelector(".chapter-header a").textContent;
-			presenceData.details = title;
-			presenceData.state = `${(await strings).reading} ${
-				document
-					.querySelector(".chapter-header")
-					.textContent.split("</a>")[1]
-					.split("\n")[0]
-			}`;
-			presenceData.startTimestamp = browsingTimestamp;
-			presenceData.smallImageKey = "book_open";
-			presenceData.smallImageText = `${(await strings).page} ${
-				document.querySelector(".first-page-number").textContent === ""
-					? "1"
-					: document.querySelector(".first-page-number").textContent
-			}/${document.querySelector(".images").children.length}`;
-			presenceData.buttons = [
-				{
-					label: `Read ${(await strings).chapter}`,
-					url: document.location.toString()
-				}
-			];
-		} else if (document.location.pathname.includes("/volumes")) {
-			const [, title] = document
-				.querySelector(".ellipsis")
-				.textContent.split("&gt;");
+  if (pathname.includes('/manga')) {
+    if (pathname.includes('/read')) {
+      const queryTitle = document.querySelector<HTMLHeadingElement>('.chapter-header h1')
+      presenceData.details = queryTitle?.children[0]?.textContent?.trim()
+      presenceData.state = `${
+        strings.reading
+      } ${queryTitle?.lastChild?.textContent?.trim()}`
+      presenceData.startTimestamp = browsingTimestamp
+      presenceData.smallImageKey = ActivityAssets.OpenBook
+      const pageNumber = document.querySelector<HTMLOutputElement>(
+        '.first-page-number',
+      )?.textContent
+      presenceData.smallImageText = `${strings.page} ${
+        pageNumber === '' ? '1' : pageNumber
+      }/${document.querySelector<HTMLOListElement>('.images')?.children.length}`
+      presenceData.buttons = [
+        {
+          label: `Read ${strings.chapter}`,
+          url: href,
+        },
+      ]
+    }
+    else if (pathname.includes('/volumes')) {
+      presenceData.details = strings.viewManga
+      presenceData.state = document
+        .querySelector<HTMLHeadingElement>('.ellipsis')
+        ?.textContent
+        ?.split('Manga > ')[1]
+      presenceData.buttons = [
+        {
+          label: `View ${strings.manga}`,
+          url: href,
+        },
+      ]
+    }
+    else {
+      presenceData.details = strings.browse
+      presenceData.startTimestamp = browsingTimestamp
 
-			presenceData.details = (await strings).viewManga;
-			presenceData.state = title;
-			presenceData.buttons = [
-				{
-					label: `View ${(await strings).manga}`,
-					url: document.location.toString()
-				}
-			];
-		} else {
-			presenceData.details = (await strings).browse;
-			presenceData.startTimestamp = browsingTimestamp;
+      delete presenceData.state
+      delete presenceData.smallImageKey
+    }
+  }
+  else if (
+    iFrameVideo !== false
+    && !Number.isNaN(duration)
+    && pathname.includes('/watch/')
+  ) {
+    const videoTitle = document.querySelector<HTMLHeadingElement>('a > h4')?.textContent
+    presenceData.smallImageKey = paused ? Assets.Pause : Assets.Play
+    presenceData.smallImageText = paused ? strings.pause : strings.play;
+    [presenceData.startTimestamp, presenceData.endTimestamp] = presence.getTimestamps(Math.floor(currentTime), Math.floor(duration))
 
-			delete presenceData.state;
-			delete presenceData.smallImageKey;
-		}
+    presenceData.details = videoTitle ?? 'Title not found...'
+    presenceData.state = document.querySelector<HTMLHeadingElement>('h1.title')?.textContent
 
-		presence.setActivity(presenceData);
-	}
+    presenceData.largeImageKey = document.querySelector<HTMLMetaElement>('[property=\'og:image\']')
+      ?.content ?? ActivityAssets.Logo
 
-	if (!playback && !document.location.pathname.includes("/manga")) {
-		presenceData.details = (await strings).browse;
-		presenceData.startTimestamp = browsingTimestamp;
+    if (paused) {
+      delete presenceData.startTimestamp
+      delete presenceData.endTimestamp
+    }
 
-		delete presenceData.state;
-		delete presenceData.smallImageKey;
+    if (videoTitle) {
+      presenceData.buttons = [
+        {
+          label: strings.watchEpisode,
+          url: href,
+        },
+        {
+          label: strings.viewSeries,
+          url: document.querySelector<HTMLAnchorElement>('.show-title-link')?.href ?? '',
+        },
+      ]
+    }
+  }
+  else if (pathname.includes('/series')) {
+    presenceData.details = strings.viewPage
+    presenceData.state = document.querySelector<HTMLHeadingElement>('h1.title')?.textContent
+    presenceData.largeImageKey = document.querySelector<HTMLMetaElement>('[property=\'og:image\']')?.content ?? ActivityAssets.Logo
+    presenceData.buttons = [
+      {
+        label: strings.viewSeries,
+        url: href,
+      },
+    ]
+  }
+  else if (pathname.includes('/search')) {
+    presenceData.details = strings.search
+    presenceData.state = document.querySelector<HTMLInputElement>('.search-input')?.value
+    presenceData.smallImageKey = Assets.Search
+  }
+  else if (pathname.includes('/simulcasts')) {
+    presenceData.details = strings.viewPage
+    presenceData.state = `${
+      document.querySelector('h1 + div span')?.textContent
+    } ${document.querySelector('h1')?.textContent}`
+  }
+  else if (pathname.includes('/videos')) {
+    presenceData.details = strings.viewCategory
+    presenceData.state = document.querySelector('h1')?.textContent
+  }
+  else if (/\/anime-.*?\/\d{4}\//.test(pathname)) {
+    presenceData.details = strings.readingArticle
+    presenceData.state = document.querySelector<HTMLHeadingElement>(
+      '.crunchynews-header',
+    )?.textContent
+    if (showCover) {
+      presenceData.largeImageKey = document.querySelector<HTMLImageElement>('.mug')?.src
+    }
+  }
+  else {
+    presenceData.details = strings.browse
+    presenceData.startTimestamp = browsingTimestamp
 
-		presence.setActivity(presenceData, true);
-	}
+    delete presenceData.state
+    delete presenceData.smallImageKey
+  }
 
-	if (iFrameVideo !== false && !isNaN(duration)) {
-		let videoTitle,
-			series: HTMLElement,
-			seriesLink,
-			episode,
-			epName,
-			seasonregex,
-			seasonName;
-		if (document.location.hostname.startsWith("beta")) {
-			seriesLink =
-				document.location.origin +
-				document.querySelector(".show-title-link").getAttribute("href");
-			episode = document.querySelector(
-				".c-heading.c-heading--xs.c-heading--family-type-one.title"
-			).textContent;
-			[, epName] = episode.match(/.* - (.*)/);
-			epName = epName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-			seasonregex = new RegExp(`(.*) ${epName} -`);
-			[, seasonName] = document.title.match(seasonregex);
-			videoTitle = seasonName;
-		} else {
-			series = document.querySelector(".ellipsis .text-link");
-			videoTitle = series.textContent;
-			seriesLink = series.getAttribute("href");
-			episode = `${
-				document.querySelectorAll("#showmedia_about_media h4")[1].textContent
-			} - ${document.querySelector("h4#showmedia_about_name").textContent}`;
-		}
-		presenceData.smallImageKey = paused ? "pause" : "play";
-		presenceData.smallImageText = paused
-			? (await strings).pause
-			: (await strings).play;
-		[, presenceData.endTimestamp] = presence.getTimestamps(
-			Math.floor(currentTime),
-			Math.floor(duration)
-		);
+  if (!showCover)
+    presenceData.largeImageKey = ActivityAssets.Logo
 
-		presenceData.details = videoTitle ?? "Title not found...";
-		presenceData.state = episode;
-
-		if (paused) {
-			delete presenceData.startTimestamp;
-			delete presenceData.endTimestamp;
-		}
-
-		if (videoTitle) {
-			presenceData.buttons = [
-				{
-					label: (await strings).watchEpisode,
-					url: document.location.toString()
-				},
-				{
-					label: (await strings).viewSeries,
-					url: seriesLink
-				}
-			];
-			presence.setActivity(presenceData, !paused);
-		}
-	}
-});
+  if (presenceData.details)
+    presence.setActivity(presenceData)
+  else presence.setActivity()
+})

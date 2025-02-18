@@ -1,102 +1,174 @@
-const presence = new Presence({
-		clientId: "867411016836186112"
-	}),
-	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		browsing: "presence.activity.browsing"
-	}),
-	path = document.location.pathname,
-	browsingTimestamp = Math.floor(Date.now() / 1000);
+import { ActivityType, Assets } from 'premid'
 
 let video = {
-	duration: 0,
-	currentTime: 0,
-	paused: true
-};
+  duration: 0,
+  currentTime: 0,
+  paused: true,
+}
+let currentLang = 'en'
+let strings: Awaited<ReturnType<typeof getStrings>>
+
+const presence = new Presence({
+  clientId: '867411016836186112',
+})
+async function getStrings() {
+  return presence.getStrings(
+    {
+      play: 'general.playing',
+      pause: 'general.paused',
+      home: 'general.viewHome',
+      viewEpisode: 'general.buttonViewEpisode',
+      viewAnime: 'general.buttonViewAnime',
+      watchingAnime: 'general.watchingAnime',
+      browsing: 'general.browsing',
+      viewPage: 'general.viewPage',
+      searchFor: 'general.searchFor',
+    },
+    currentLang,
+  )
+}
+const pathArr = document.location.pathname.split('/')
+const browsingTimestamp = Math.floor(Date.now() / 1000)
+const pages: Record<string, PresenceData> = {
+  'liste-danimes': {
+    state: 'Listes d\'animes',
+  },
+  'nouveaux-ajouts': {
+    state: 'Nouveaux animes',
+  },
+  'prochainement': {
+    state: 'Prochains animes',
+  },
+}
 
 presence.on(
-	"iFrameData",
-	(data: { duration: number; currentTime: number; paused: boolean }) => {
-		if (data?.duration) video = data;
-	}
-);
+  'iFrameData',
+  (data: { duration: number, currentTime: number, paused: boolean }) => {
+    if (data?.duration)
+      video = data
+  },
+)
 
-presence.on("UpdateData", async () => {
-	const presenceData: PresenceData = {
-		largeImageKey: "logo",
-		startTimestamp: browsingTimestamp
-	};
+presence.on('UpdateData', async () => {
+  const [newLang, privacyMode, showTimestamps, showButtons] = await Promise.all(
+    [
+      presence.getSetting<string>('lang').catch(() => 'fr'),
+      presence.getSetting<boolean>('privacy'),
+      presence.getSetting<boolean>('timestamps'),
+      presence.getSetting<boolean>('buttons'),
+    ],
+  )
 
-	if (path.includes("/liste-danimes")) {
-		presenceData.details = "Visite la page :";
-		presenceData.state = "Listes d'animes";
-	} else if (path.includes("/nouveaux-ajouts")) {
-		presenceData.details = "Visite la page :";
-		presenceData.state = "Nouveaux animes";
-	} else if (path.includes("/prochainement")) {
-		presenceData.details = "Visite la page :";
-		presenceData.state = "Prochains animes";
-	} else if (document.location.search.startsWith("?s")) {
-		presenceData.details = "Recherche un anime :";
-		presenceData.state = new URLSearchParams(document.location.search).get("s");
-		presenceData.smallImageKey = "search";
-	} else if (path.includes("/anime/")) {
-		const title = document.querySelector(
-			"#manga-reading-nav-head > div > div.entry-header_wrap > div > div.c-breadcrumb > ol > li:nth-child(2) > a"
-		)?.textContent;
+  if (currentLang !== newLang || !strings) {
+    currentLang = newLang
+    strings = await getStrings()
+  }
 
-		presenceData.details = "Visite la page de l'anime :";
-		presenceData.state = document.querySelector(
-			"body > div.wrap > div > div.site-content > div > div.profile-manga > div > div > div > div.post-title > h1"
-		)?.textContent;
-		if (!isNaN(video.duration) && title) {
-			const [startTimestamp, endTimestamp] = presence.getTimestamps(
-					video.currentTime,
-					video.duration
-				),
-				[, epAndSeason] = document
-					.querySelector(
-						"#manga-reading-nav-head > div > div.entry-header_wrap > div > div.c-breadcrumb > ol > li.active"
-					)
-					.textContent.split("-");
+  let presenceData: PresenceData = {
+    details: strings.home,
+    type: ActivityType.Watching,
+    largeImageKey: 'https://cdn.rcd.gg/PreMiD/websites/V/Voiranime/assets/logo.png',
+    startTimestamp: browsingTimestamp,
+  }
 
-			presenceData.details = title;
-			presenceData.state = epAndSeason;
-			presenceData.startTimestamp = startTimestamp;
-			presenceData.endTimestamp = endTimestamp;
-			presenceData.smallImageKey = video.paused ? "pause" : "play";
-			presenceData.smallImageText = video.paused
-				? (await strings).pause
-				: (await strings).play;
-			presenceData.buttons = [
-				{
-					label: "Regarder l'épisode",
-					url: document.location.href
-				},
-				{
-					label: "Voir l'anime",
-					url: document
-						.querySelector(
-							"#manga-reading-nav-head > div > div.entry-header_wrap > div > div.c-breadcrumb > ol > li:nth-child(2) > a"
-						)
-						.getAttribute("href")
-				}
-			];
-			if (video.paused) {
-				delete presenceData.startTimestamp;
-				delete presenceData.endTimestamp;
-			}
-		}
-	} else if (path.includes("/anime-genre")) {
-		presenceData.details = "Visite la page :";
-		presenceData.state = `Listes d'animes du genre "${
-			document.querySelector(
-				"body > div.wrap > div.body-wrap > div.site-content > div.c-page-content.style-1 > div > div > div > div.main-col.col-md-8.col-sm-8 > div.main-col-inner > div > div.entry-header > div > div > h1"
-			)?.textContent
-		}"`;
-	} else presenceData.details = "Page d'accueil";
+  if (privacyMode)
+    presenceData.details = strings.browsing
+  switch (pathArr[1]) {
+    case 'anime': {
+      const title = document.querySelector('ol > li:nth-child(2) > a')
+      presenceData.details = 'Visite la page de l\'anime :'
+      presenceData.state = document.querySelector(
+        'div.post-title > h1',
+      )?.textContent
+      if (privacyMode) {
+        delete presenceData.state
+        presenceData.details = strings.browsing
+      }
+      if (
+        !Number.isNaN(video.duration)
+        && title
+        && !!document.querySelector('li.active')
+      ) {
+        const [startTimestamp, endTimestamp] = presence.getTimestamps(
+          video.currentTime,
+          video.duration,
+        )
 
-	if (presenceData.details) presence.setActivity(presenceData);
-	else presence.setActivity();
-});
+        presenceData.details = title.textContent
+        presenceData.state = document
+          .querySelector('li.active')
+          ?.textContent
+          ?.split('-')[1];
+        [presenceData.startTimestamp, presenceData.endTimestamp] = [
+          startTimestamp,
+          endTimestamp,
+        ]
+        presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play
+        presenceData.smallImageText = video.paused
+          ? strings.pause
+          : strings.play
+        presenceData.buttons = [
+          {
+            label: strings.viewEpisode,
+            url: document.location.href,
+          },
+          {
+            label: strings.viewAnime,
+            url: title.getAttribute('href'),
+          },
+        ]
+        if (video.paused) {
+          delete presenceData.startTimestamp
+          delete presenceData.endTimestamp
+        }
+        if (privacyMode) {
+          delete presenceData.buttons
+          delete presenceData.smallImageKey
+          delete presenceData.state
+          delete presenceData.startTimestamp
+          delete presenceData.endTimestamp
+          presenceData.details = strings.watchingAnime
+        }
+      }
+      break
+    }
+    case 'anime-genre':
+      presenceData.details = strings.viewPage
+      presenceData.state = `Listes d'animes du genre "${
+        document.querySelector('h1')?.textContent
+      }"`
+      if (privacyMode) {
+        delete presenceData.state
+        presenceData.details = strings.browsing
+      }
+      break
+    default:
+      if (document.location.search.startsWith('?s')) {
+        presenceData.details = strings.searchFor
+        presenceData.state = new URLSearchParams(document.location.search).get(
+          's',
+        )
+        presenceData.smallImageKey = Assets.Search
+      }
+      else if (Object.keys(pages).includes(pathArr[1]!)) {
+        presenceData.details = strings.viewPage
+      }
+      presenceData = { ...presenceData, ...pages[pathArr[1]!] } as PresenceData
+      if (privacyMode) {
+        delete presenceData.state
+        delete presenceData.smallImageKey
+        presenceData.details = strings.browsing
+      }
+      break
+  }
+
+  if (!showButtons || privacyMode)
+    delete presenceData.buttons
+  if (!showTimestamps) {
+    delete presenceData.startTimestamp
+    delete presenceData.endTimestamp
+  }
+  if (presenceData.details)
+    presence.setActivity(presenceData)
+  else presence.setActivity()
+})

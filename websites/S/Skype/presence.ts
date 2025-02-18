@@ -1,90 +1,88 @@
+import { Assets } from 'premid'
+
 const presence = new Presence({
-		clientId: "617500416887881748" // CLIENT ID FOR YOUR PRESENCE
-	}),
-	browsingTimestamp = Math.floor(Date.now() / 1000);
+  clientId: '617500416887881748',
+})
+const browsingTimestamp = Math.floor(Date.now() / 1000)
 
-let typing: HTMLElement, user: HTMLElement, bot: HTMLElement;
+enum ActivityAssets {
+  Logo = 'https://cdn.rcd.gg/PreMiD/websites/S/Skype/assets/logo.png',
+}
 
-presence.on("UpdateData", async () => {
-	const presenceData: PresenceData = {
-		largeImageKey: "fror_why"
-	};
+async function getStrings() {
+  return presence.getStrings(
+    {
+      browse: 'general.browsing',
+      search: 'general.searchFor',
+      readDm: 'general.readingDM',
+      typeDm: 'general.typeDM',
+    },
+    await presence.getSetting<string>('lang').catch(() => 'en'),
+  )
+}
+let strings: Awaited<ReturnType<typeof getStrings>>
+let oldLang: string | null = null
 
-	presenceData.startTimestamp = browsingTimestamp;
+presence.on('UpdateData', async () => {
+  const presenceData: PresenceData = {
+    largeImageKey: ActivityAssets.Logo,
+    startTimestamp: browsingTimestamp,
+  }
+  const [newLang, privacy] = await Promise.all([
+    presence.getSetting<string>('lang').catch(() => 'en'),
+    presence.getSetting<boolean>('privacy'),
+  ])
+  const typing = document.querySelector(
+    '[class="public-DraftStyleDefault-block public-DraftStyleDefault-ltr"]',
+  )
+  const user = document.querySelectorAll('button[aria-label*=":"]')[1]
+    ?? document.querySelectorAll('button[aria-label*=","]')[6]
+  const search = document.querySelector<HTMLInputElement>('input[type="text"]')
 
-	if (document.location.hostname === "web.skype.com") {
-		user = document.querySelector(
-			"body > div.app-container > div > div:nth-child(1) > div:nth-child(2) > div > div:nth-child(1) > div > div:nth-child(2) > div > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div > div > div > div > button > div > div"
-		);
-		typing = document.querySelector(
-			"body > div.app-container > div > div:nth-child(1) > div:nth-child(2) > div > div:nth-child(1) > div > div:nth-child(2) > div > div:nth-child(2) > div > div > div > div > div > div:nth-child(2) > div:nth-child(2) > div > div > div > div > div > div > div:nth-child(2) > div:nth-child(3) > div > div > div:nth-child(2) > div > div > div > div > div > div > span > br"
-		);
-		bot = document.querySelector(
-			"body > div.app-container > div > div:nth-child(1) > div:nth-child(2) > div > div:nth-child(1) > div > div:nth-child(2) > div > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div > div > div > button > div > div"
-		);
-		if (user) {
-			if (!typing) {
-				presenceData.details = "Typing in chat:";
-				presenceData.state = user.textContent;
+  if (oldLang !== newLang || !strings) {
+    oldLang = newLang
+    strings = await getStrings()
+  }
 
-				delete presenceData.smallImageKey;
+  if (privacy) {
+    presenceData.details = strings.browse
+    presence.setActivity(presenceData)
+    return
+  }
 
-				presence.setActivity(presenceData);
-			} else {
-				presenceData.details = "Reading chat:";
-				presenceData.state = user.textContent;
+  switch (document.location.hostname) {
+    case 'preview.web.skype.com':
+    case 'web.skype.com': {
+      if (search?.value) {
+        presenceData.details = strings.search
+        presenceData.state = search.value
+        presenceData.smallImageKey = Assets.Search
+      }
+      else if (user) {
+        if (typing?.textContent) {
+          presenceData.details = strings.typeDm
+        }
+        else {
+          presenceData.details = strings.readDm
+          presenceData.smallImageKey = Assets.Reading
+        }
+        presenceData.state = user.textContent
+      }
+      else {
+        presenceData.details = strings.browse
+      }
+      break
+    }
+    case 'www.skype.com': {
+      presenceData.details = 'Skype'
+      presenceData.state = 'Browsing...'
 
-				presenceData.smallImageKey = "reading";
-
-				presence.setActivity(presenceData);
-			}
-		} else if (bot) {
-			if (!typing) {
-				presenceData.details = "Typing in chat:";
-				presenceData.state = bot.textContent;
-
-				delete presenceData.smallImageKey;
-
-				presence.setActivity(presenceData);
-			} else {
-				presenceData.details = "Reading chat:";
-				presenceData.state = bot.textContent;
-
-				presenceData.smallImageKey = "reading";
-
-				presence.setActivity(presenceData);
-			}
-		} else presence.setActivity();
-	} else if (document.location.hostname === "preview.web.skype.com") {
-		user = document.querySelector(
-			"body > div.app-container > div > div:nth-child(1) > div:nth-child(2) > div > div:nth-child(1) > div > div:nth-child(2) > div > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div > div > div > div > button > div > div"
-		);
-		typing = document.querySelector(
-			"body > div.app-container > div > div:nth-child(1) > div:nth-child(2) > div > div:nth-child(1) > div > div:nth-child(2) > div > div:nth-child(2) > div > div > div > div > div > div:nth-child(2) > div:nth-child(2) > div > div > div:nth-child(1) > div > div > div > div > div:nth-child(2) > div:nth-child(3) > div > div > div:nth-child(2) > div > div > div > div > div > div > span > span"
-		);
-		if (user) {
-			if (typing) {
-				presenceData.details = "Typing in chat:";
-				presenceData.state = user.textContent;
-
-				delete presenceData.smallImageKey;
-
-				presence.setActivity(presenceData);
-			} else {
-				presenceData.details = "Reading chat:";
-				presenceData.state = user.textContent;
-
-				presenceData.smallImageKey = "reading";
-
-				presence.setActivity(presenceData);
-			}
-		} else presence.setActivity();
-	} else if (document.location.hostname === "www.skype.com") {
-		presenceData.details = "Skype";
-		presenceData.state = "Browsing...";
-
-		delete presenceData.smallImageKey;
-
-		presence.setActivity(presenceData);
-	} else presence.setActivity();
-});
+      break
+    }
+    default:
+      presenceData.details = strings.browse
+  }
+  if (presenceData.details)
+    presence.setActivity(presenceData)
+  else presence.setActivity()
+})

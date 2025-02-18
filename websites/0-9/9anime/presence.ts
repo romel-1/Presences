@@ -1,77 +1,101 @@
+import { ActivityType, Assets } from 'premid'
+
 const presence = new Presence({
-		clientId: "934701636251680768"
-	}),
-	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		browsing: "presence.activity.browsing"
-	});
-let video = {
-	duration: 0,
-	currentTime: 0,
-	paused: true
-};
+  clientId: '1264754447276310599',
+})
+const browsingTimestamp = Math.floor(Date.now() / 1000)
 
-presence.on(
-	"iFrameData",
-	(data: { duration: number; currentTime: number; paused: boolean }) => {
-		video = data;
-	}
-);
+enum ActivityAssets {
+  Logo = 'https://cdn.rcd.gg/PreMiD/websites/0-9/9anime/assets/logo.png',
+}
+presence.on('UpdateData', async () => {
+  const presenceData: PresenceData = {
+    largeImageKey: ActivityAssets.Logo,
+    startTimestamp: browsingTimestamp,
+    type: ActivityType.Watching,
+  }
+  const { href, pathname, search } = document.location
+  switch (true) {
+    case pathname === '/':
+    case pathname === '/home':
+      presenceData.details = 'Viewing Homepage'
+      break
+    case pathname === '/search':
+      presenceData.details = `Viewing results: ${search
+        .split('=')[1]
+        ?.replace(/\+/g, ' ')}`
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname.includes('/genre/'):
+      presenceData.details = `Viewing genre: ${pathname.split('/')[2]}`
+      break
+    case pathname.includes('/watch/'): {
+      presenceData.details = document.title
+        .replace(/^Watch /, '')
+        .replace(/ online free on 9anime$/, '')
+      const coverArt = document
+        .querySelector<HTMLImageElement>('[class="anime-poster"]')
+        ?.querySelector('img')
+        ?.src
+      const episodeNumber = document
+        .querySelector('[class="item ep-item active"]')
+        ?.textContent
+        ?.match(/[1-9]\d*/)?.[0]
 
-presence.on("UpdateData", async () => {
-	const presenceData: PresenceData = {
-		largeImageKey: "9anime"
-	};
-
-	if (
-		video &&
-		!isNaN(video.duration) &&
-		document.location.pathname.includes("/watch")
-	) {
-		const [startTimestamp, endTimestamp] = presence.getTimestamps(
-				Math.floor(video.currentTime),
-				Math.floor(video.duration)
-			),
-			coverArt = document.querySelector<HTMLImageElement>("#info img")?.src,
-			showCover = await presence.getSetting<boolean>("cover");
-
-		presenceData.details = document.querySelector("#info .title").textContent;
-		presenceData.state =
-			document.querySelector("#episodes .episodes a.active") &&
-			/\d/.test(
-				document.querySelector("#episodes .episodes a.active").textContent
-			)
-				? `${
-						document.querySelector(
-							".meta .col1 > div:nth-child(1) > span:nth-child(1) > a:nth-child(1)"
-						).textContent
-				  } • E${
-						document.querySelector("#episodes .episodes a.active").textContent
-				  }`
-				: document.querySelector(
-						".meta .col1 > div:nth-child(1) > span:nth-child(1) > a:nth-child(1)"
-				  ).textContent;
-
-		if (coverArt && showCover) presenceData.largeImageKey = coverArt;
-
-		presenceData.smallImageKey = video.paused ? "pause" : "play";
-		presenceData.smallImageText = video.paused
-			? (await strings).pause
-			: (await strings).play;
-		presenceData.startTimestamp = startTimestamp;
-		presenceData.endTimestamp = endTimestamp;
-
-		if (video.paused) {
-			delete presenceData.startTimestamp;
-			delete presenceData.endTimestamp;
-		}
-
-		presence.setActivity(presenceData, !video.paused);
-	} else {
-		presenceData.details = (await strings).browsing;
-		presenceData.smallImageKey = "search";
-		presenceData.smallImageText = (await strings).browsing;
-		presence.setActivity(presenceData);
-	}
-});
+      presenceData.state = `Episode ${episodeNumber}`
+      presenceData.largeImageKey = coverArt ?? ActivityAssets.Logo
+      presenceData.buttons = [
+        {
+          label: 'View Anime',
+          url: href,
+        },
+      ]
+      presenceData.smallImageKey = coverArt ?? ActivityAssets.Logo
+      break
+    }
+    case pathname.includes('/az-list'):
+      presenceData.details = `Viewing AZ List: ${pathname.split('/')[2]}`
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/movie':
+      presenceData.details = 'Browsing movies...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/tv':
+      presenceData.details = 'Browsing TV series...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/ova':
+      presenceData.details = 'Browsing OVAs...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/ona':
+      presenceData.details = 'Browsing ONAs...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/special':
+      presenceData.details = 'Browsing specials...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/recently-updated':
+      presenceData.details = 'Browsing recently updated anime...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/recently-added':
+      presenceData.details = 'Browsing recently added anime...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/ongoing':
+      presenceData.details = 'Browsing ongoing anime...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    case pathname === '/upcoming':
+      presenceData.details = 'Viewing upcoming anime...'
+      presenceData.smallImageKey = Assets.Search
+      break
+    default:
+      presenceData.details = 'Browsing 9anime...'
+      break
+  }
+  presence.setActivity(presenceData)
+})

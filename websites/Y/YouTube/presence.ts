@@ -1,624 +1,618 @@
-const presence = new Presence({
-		clientId: "463097721130188830"
-	}),
-	// YouTube TV separator pattern
-	pattern = "•";
+import type {
+  Resolver,
+} from './util/index.js'
+import { ActivityType, Assets } from 'premid'
+import {
+  checkStringLanguage,
+  getQuerySelectors,
+  getSetting,
+  getThumbnail,
+  presence,
+  strings,
+} from './util/index.js'
+import { pvPrivacyUI } from './util/pvPrivacyUI.js'
+import youtubeApiResolver from './video_sources/api.js'
+import youtubeResolver from './video_sources/default.js'
+import youtubeEmbedResolver from './video_sources/embed.js'
+import youtubeMiniplayerResolver from './video_sources/miniplayer.js'
+import youtubeMobileResolver from './video_sources/mobile_default.js'
+import youtubeMobileShortsResolver from './video_sources/mobile_shorts.js'
+import youtubeMoviesResolver from './video_sources/movies.js'
+import youtubeOldResolver from './video_sources/old.js'
+import youtubeShortsResolver from './video_sources/shorts.js'
+import youtubeTVResolver from './video_sources/tv.js'
 
-function truncateAfter(str: string, pattern: string): string {
-	return str.slice(0, str.indexOf(pattern));
+const browsingTimestamp = Math.floor(Date.now() / 1000)
+
+enum YouTubeAssets {
+  Logo = 'https://cdn.rcd.gg/PreMiD/websites/Y/YouTube/assets/logo.png',
+  Studio = 'https://cdn.rcd.gg/PreMiD/websites/Y/YouTube/assets/0.png',
+  Shorts = 'https://cdn.rcd.gg/PreMiD/websites/Y/YouTube/assets/1.png',
 }
 
-async function getStrings() {
-	return presence.getStrings(
-		{
-			play: "general.playing",
-			pause: "general.paused",
-			live: "general.live",
-			ad: "youtube.ad",
-			search: "general.searchFor",
-			browsingVid: "youtube.browsingVideos",
-			browsingPlayl: "youtube.browsingPlaylists",
-			viewCPost: "youtube.viewingCommunityPost",
-			ofChannel: "youtube.ofChannel",
-			readChannel: "youtube.readingChannel",
-			searchChannel: "youtube.searchChannel",
-			trending: "youtube.trending",
-			browsingThrough: "youtube.browsingThrough",
-			subscriptions: "youtube.subscriptions",
-			library: "youtube.library",
-			history: "youtube.history",
-			purchases: "youtube.purchases",
-			reports: "youtube.reportHistory",
-			upload: "youtube.upload",
-			viewChannel: "general.viewChannel",
-			viewAllPlayL: "youtube.viewAllPlaylist",
-			viewEvent: "youtube.viewLiveEvents",
-			viewLiveDash: "youtube.viewLiveDashboard",
-			viewAudio: "youtube.viewAudioLibrary",
-			studioVid: "youtube.studio.viewVideos",
-			studioEdit: "youtube.studio.editVideo",
-			studioAnaly: "youtube.studio.videoAnalytics",
-			studioComments: "youtube.studio.videoComments",
-			studioTranslate: "youtube.studio.videoTranslations",
-			studioTheir: "youtube.studio.viewTheir",
-			studioCAnaly: "youtube.studio.channelAnalytics",
-			studioCComments: "youtube.studio.channelComments",
-			studioCTranslate: "youtube.studio.channelTranslations",
-			studioArtist: "youtube.studio.artistPage",
-			studioDash: "youtube.studio.dashboard",
-			viewPlaylist: "general.viewPlaylist",
-			readAbout: "general.readingAbout",
-			viewAccount: "general.viewAccount",
-			viewHome: "general.viewHome",
-			watchVid: "general.watchingVid",
-			watchLive: "general.watchingLive",
-			browsing: "general.browsing",
-			searchSomething: "general.searchSomething",
-			watchStreamButton: "general.buttonWatchStream",
-			watchVideoButton: "general.buttonWatchVideo",
-			viewChannelButton: "general.buttonViewChannel"
-		},
-		await presence.getSetting<string>("lang").catch(() => "en")
-	);
+enum LogoMode {
+  YouTubeLogo = 0,
+  Thumbnail = 1,
+  Channel = 2,
 }
 
-let strings: Awaited<ReturnType<typeof getStrings>>,
-	oldLang: string = null;
+const nullResolver: Resolver = {
+  isActive: () => true,
+  getTitle: () => document.title,
+  getUploader: () => '',
+  getChannelURL: () => '',
+  getVideoID: () => '',
+}
 
-presence.on("UpdateData", async () => {
-	//* Update strings if user selected another language.
-	const [
-		newLang,
-		privacy,
-		time,
-		vidDetail,
-		vidState,
-		channelPic,
-		logo,
-		buttons
-	] = await Promise.all([
-		presence.getSetting<string>("lang").catch(() => "en"),
-		presence.getSetting<boolean>("privacy"),
-		presence.getSetting<boolean>("time"),
-		presence.getSetting<string>("vidDetail"),
-		presence.getSetting<string>("vidState"),
-		presence.getSetting<boolean>("channelPic"),
-		presence.getSetting<number>("logo"),
-		presence.getSetting<boolean>("buttons")
-	]);
+presence.on('UpdateData', async () => {
+  const [
+    newLang,
+    privacy,
+    privacyTtl,
+    privacyButtonShown,
+    time,
+    vidDetail,
+    vidState,
+    channelPic,
+    logo,
+    buttons,
+    hideHome,
+    hidePaused,
+  ] = [
+    getSetting<string>('lang', 'en'),
+    getSetting<boolean>('privacy', true),
+    getSetting<number>('privacy-ttl', 1),
+    getSetting<boolean>('privacy-shown', true),
+    getSetting<boolean>('time', true),
+    getSetting<string>('vidDetail', '%title%'),
+    getSetting<string>('vidState', '%uploader%'),
+    getSetting<boolean>('channelPic', false),
+    getSetting<number>('largeImage', 0),
+    getSetting<boolean>('buttons', true),
+    getSetting<boolean>('hideHome', false),
+    getSetting<boolean>('hidePaused', true),
+  ]
+  const { pathname, hostname, search, href } = document.location
+  const isMobile = hostname === 'm.youtube.com'
+  const selectors = getQuerySelectors(isMobile)
 
-	if (oldLang !== newLang || !strings) {
-		oldLang = newLang;
-		strings = await getStrings();
-	}
+  // Update strings if user selected another language.
+  if (!checkStringLanguage(newLang))
+    return
 
-	//* If there is a vid playing
-	const video = Array.from(
-		document.querySelectorAll<HTMLVideoElement>(".video-stream")
-	).find(video => video.duration);
+  // If there is a vid playing
+  const video = Array.from(
+    document.querySelectorAll<HTMLVideoElement>('.video-stream'),
+  ).find(video => video.duration)
 
-	if (video) {
-		let oldYouTube: boolean = null,
-			YouTubeTV: boolean = null,
-			YouTubeEmbed: boolean = null,
-			title: HTMLElement,
-			pfp: string;
+  if (video) {
+    const { mediaSession } = navigator
+    if (mediaSession.playbackState !== 'playing' && hidePaused)
+      return presence.clearActivity()
 
-		//* Checking if user has old YT layout.
-		document.querySelector(".watch-title")
-			? (oldYouTube = true)
-			: (oldYouTube = false);
+    const resolver = [
+      youtubeEmbedResolver,
+      youtubeShortsResolver,
+      youtubeOldResolver,
+      youtubeTVResolver,
+      youtubeResolver,
+      youtubeMiniplayerResolver,
+      youtubeMoviesResolver,
+      youtubeMobileResolver,
+      youtubeMobileShortsResolver,
+      youtubeApiResolver,
+      nullResolver,
+    ].find(resolver => resolver.isActive())!
+    const title = resolver.getTitle()!
+    const uploaderName = resolver.getUploader()!
 
-		document.querySelector(".player-video-title")
-			? (YouTubeTV = true)
-			: (YouTubeTV = false);
+    let pfp: string | undefined
 
-		document.location.pathname.includes("/embed")
-			? (YouTubeEmbed = true)
-			: (YouTubeEmbed = false);
+    const live = !!document.querySelector(selectors.videoLive)
+    const isPlaylistLoop = document
+      .querySelector('#playlist-actions .yt-icon-button#button')
+      ?.getAttribute('aria-pressed') === 'true'
+    const playlistTitle = document
+      .querySelector(selectors.videoPlaylistTitle)
+      ?.textContent
+      ?.trim() ?? ''
+    const playlistQueueElements = document.querySelectorAll<HTMLSpanElement>(
+      '#content #publisher-container > div > yt-formatted-string > span',
+    )
+    let playlistQueue: string | undefined
+    if (playlistTitle) {
+      if (playlistQueueElements.length > 1) {
+        playlistQueue = `${playlistQueueElements[0]?.textContent} / ${playlistQueueElements[2]?.textContent}`
+      }
+      else if (isMobile) {
+        playlistQueue = document
+          .querySelector(selectors.videoPlaylistTitle)
+          ?.nextSibling
+          ?.textContent
+          ?.replace(/^ • /, '')
+      }
+      else {
+        playlistQueue = document.querySelector<HTMLSpanElement>(
+          '#content #publisher-container > div > span',
+        )?.textContent ?? undefined
+      }
+    }
 
-		//* Due to differences between old and new YouTube, we should add different selectors.
-		// Get title
-		YouTubeEmbed
-			? (title = document.querySelector("div.ytp-title-text > a"))
-			: oldYouTube && document.location.pathname.includes("/watch")
-			? (title = document.querySelector(".watch-title"))
-			: YouTubeTV
-			? (title = document.querySelector(".player-video-title"))
-			: !document.location.pathname.includes("/watch")
-			? (title = document.querySelector(".ytd-miniplayer .title"))
-			: (title = document.querySelector(
-					"h1 yt-formatted-string.ytd-video-primary-info-renderer"
-			  ));
+    if (logo === LogoMode.Channel) {
+      pfp = resolver === youtubeMiniplayerResolver
+        ? ''
+        : document
+          .querySelector<HTMLImageElement>(selectors.videoChannelImage)
+          ?.src
+          .replace(/=s\d+/, '=s512')
+    }
+    const unlistedPathElement = document.querySelector<SVGPathElement>(
+      'g#privacy_unlisted > path',
+    )
+    const unlistedBadgeElement = document.querySelector<SVGPathElement>(
+      'h1.title+ytd-badge-supported-renderer path',
+    )
+    const unlistedVideo = unlistedPathElement
+      && unlistedBadgeElement
+      && unlistedPathElement?.getAttribute('d')
+      === unlistedBadgeElement?.getAttribute('d')
+    const videoId = resolver.getVideoID()!
+    const [startTimestamp, endTimestamp] = presence.getTimestampsfromMedia(video)
+    const presenceData: PresenceData = {
+      type: ActivityType.Watching,
+      details: vidDetail
+        .replace('%title%', title.trim())
+        .replace('%uploader%', uploaderName.trim())
+        .replace('%playlistTitle%', playlistTitle.trim())
+        .replace('%playlistQueue%', playlistQueue?.trim() ?? ''),
+      state: vidState
+        .replace('%title%', title.trim())
+        .replace('%uploader%', uploaderName.trim())
+        .replace('%playlistTitle%', playlistTitle.trim())
+        .replace('%playlistQueue%', playlistQueue?.trim() ?? ''),
+      largeImageKey: unlistedVideo || logo === LogoMode.YouTubeLogo || pfp === ''
+        ? YouTubeAssets.Logo
+        : logo === LogoMode.Thumbnail
+          ? await getThumbnail(videoId)
+          : pfp,
+      smallImageKey: video.paused
+        ? Assets.Pause
+        : video.loop
+          ? Assets.RepeatOne
+          : isPlaylistLoop
+            ? Assets.Repeat
+            : Assets.Play,
+      smallImageText: video.paused
+        ? strings.pause
+        : video.loop
+          ? 'On loop'
+          : isPlaylistLoop
+            ? 'Playlist on loop'
+            : strings.play,
+      startTimestamp,
+      endTimestamp,
+    }
 
-		let uploaderTV: Element | string,
-			uploaderMiniPlayer: HTMLElement,
-			uploader2: HTMLElement,
-			edited: boolean,
-			uploaderEmbed: HTMLElement;
-		(edited = false),
-			(uploaderTV =
-				document.querySelector(".player-video-details") ||
-				document.querySelector(
-					"ytd-video-owner-renderer  .ytd-channel-name a"
-				)),
-			(uploaderEmbed = document.querySelector(
-				"div.ytp-title-expanded-heading > h2 > a"
-			)),
-			(uploaderMiniPlayer = document.querySelector(
-				"yt-formatted-string#owner-name"
-			)),
-			(uploader2 = document.querySelector("#owner-name a"));
+    if (vidState.includes('{0}'))
+      delete presenceData.state
 
-		if (uploaderMiniPlayer && uploaderMiniPlayer.textContent === "YouTube") {
-			edited = true;
-			uploaderMiniPlayer.setAttribute(
-				"premid-value",
-				"Listening to a playlist"
-			);
-		}
+    // Remove timestamps if paused or live
+    if (video.paused || live) {
+      delete presenceData.startTimestamp
+      delete presenceData.endTimestamp
 
-		const uploader =
-				uploaderMiniPlayer && uploaderMiniPlayer.textContent.length > 0
-					? uploaderMiniPlayer
-					: uploader2 && uploader2.textContent.length > 0
-					? uploader2
-					: document.querySelector(
-							"#upload-info yt-formatted-string.ytd-channel-name a"
-					  )
-					? document.querySelector(
-							"#upload-info yt-formatted-string.ytd-channel-name a"
-					  )
-					: uploaderEmbed &&
-					  YouTubeEmbed &&
-					  uploaderEmbed.textContent.length > 0
-					? uploaderEmbed
-					: (uploaderTV = truncateAfter(
-							uploaderTV.textContent.replace(/\s+/g, ""),
-							pattern
-					  )),
-			live = Boolean(document.querySelector(".ytp-live"));
-		let isPlaylistLoop = false;
+      if (live) {
+        presenceData.smallImageKey = Assets.Live
+        presenceData.smallImageText = strings.live
+      }
+    }
 
-		if (
-			document.querySelector("#playlist-actions .yt-icon-button#button") &&
-			document
-				.querySelector("#playlist-actions .yt-icon-button#button")
-				.getAttribute("aria-pressed")
-		) {
-			isPlaylistLoop =
-				document
-					.querySelector("#playlist-actions .yt-icon-button#button")
-					.getAttribute("aria-pressed") === "true";
-		}
+    let perVideoPrivacy = privacy
+    if (resolver === youtubeResolver || resolver === youtubeMobileResolver) {
+      if (privacyButtonShown) {
+        perVideoPrivacy = pvPrivacyUI(
+          privacy,
+          new URLSearchParams(search).get('v')!,
+          privacyTtl,
+        )
+      }
+      else {
+        const enablePrivacyElement = document.querySelector('#pmdEnablePrivacy')
 
-		let finalUploader =
-				edited === true
-					? uploaderMiniPlayer.getAttribute("premid-value")
-					: uploaderTV
-					? typeof uploaderTV === "string"
-						? uploaderTV
-						: uploaderTV.textContent
-					: typeof uploader === "string"
-					? uploader
-					: uploader.textContent,
-			finalTitle =
-				!title || title.textContent.replace(/\s+/g, "") === ""
-					? document.querySelector("div.ytp-title-text > a").textContent
-					: title.textContent;
+        if (enablePrivacyElement) {
+          enablePrivacyElement.remove()
+          document.querySelector('#pmdEnablePrivacyTooltip')?.remove()
+        }
+      }
+    }
 
-		//* YouTube Movies
-		if (
-			!title &&
-			document.querySelector(
-				".title.style-scope.ytd-video-primary-info-renderer"
-			)
-		) {
-			finalTitle = document.querySelector(
-				".title.style-scope.ytd-video-primary-info-renderer"
-			).textContent;
-		}
-		if (
-			!uploader &&
-			document.querySelector(".style-scope.ytd-channel-name > a")
-		) {
-			finalUploader = document.querySelector(
-				".style-scope.ytd-channel-name > a"
-			).textContent;
-		}
-		if (logo === 2) {
-			pfp = document
-				.querySelector<HTMLImageElement>(
-					"#avatar.ytd-video-owner-renderer > img"
-				)
-				.src.replace("=s88", "=s512");
-		}
-		const unlistedPathElement = document.querySelector<SVGPathElement>(
-				"g#privacy_unlisted > path"
-			),
-			unlistedBadgeElement = document.querySelector<SVGPathElement>(
-				"h1.title+ytd-badge-supported-renderer path"
-			),
-			unlistedVideo =
-				unlistedPathElement &&
-				unlistedBadgeElement &&
-				unlistedPathElement.getAttribute("d") ===
-					unlistedBadgeElement.getAttribute("d"),
-			videoId = document
-				.querySelector("#page-manager > ytd-watch-flexy")
-				.getAttribute("video-id"),
-			presenceData: PresenceData = {
-				details: vidDetail
-					.replace("%title%", finalTitle)
-					.replace("%uploader%", finalUploader),
-				state: vidState
-					.replace("%title%", finalTitle)
-					.replace("%uploader%", finalUploader),
-				largeImageKey:
-					unlistedVideo || logo === 0 || pfp === ""
-						? "yt_lg"
-						: logo === 1
-						? `https://i3.ytimg.com/vi/${videoId}/hqdefault.jpg`
-						: pfp,
-				smallImageKey: video.paused
-					? "pause"
-					: video.loop
-					? "repeat-one"
-					: isPlaylistLoop
-					? "repeat"
-					: "play",
-				smallImageText: video.paused
-					? strings.pause
-					: video.loop
-					? "On loop"
-					: isPlaylistLoop
-					? "Playlist on loop"
-					: strings.play,
-				endTimestamp: presence.getTimestampsfromMedia(video)[1]
-			};
+    // Update title to indicate when an ad is being played
+    if (document.querySelector('.ytp-ad-player-overlay')) {
+      presenceData.details = strings.ad
+      delete presenceData.state
+    }
+    else if (perVideoPrivacy) {
+      // defaults to privacy setting, but allows it to be overwritten
+      if (live)
+        presenceData.details = strings.watchLive
+      else presenceData.details = strings.watchVid
 
-		if (vidState.includes("{0}")) delete presenceData.state;
+      delete presenceData.state
+      presenceData.largeImageKey = YouTubeAssets.Logo
+      presenceData.startTimestamp = browsingTimestamp
+      delete presenceData.endTimestamp
+    }
+    else if (buttons && !unlistedVideo) {
+      presenceData.buttons = [
+        {
+          label: live ? strings.watchStreamButton : strings.watchVideoButton,
+          url: href.includes('/watch?v=')
+            ? href.split('&')[0]!
+            : `https://www.youtube.com/watch?v=${videoId}`,
+        },
+        {
+          label: strings.viewChannelButton,
+          url: resolver.getChannelURL()!,
+        },
+      ]
+    }
+    if (!time) {
+      delete presenceData.startTimestamp
+      delete presenceData.endTimestamp
+    }
 
-		presence.setTrayTitle(
-			video.paused
-				? ""
-				: !finalTitle
-				? document.querySelector(
-						".title.style-scope.ytd-video-primary-info-renderer"
-				  ).textContent
-				: finalTitle
-		);
+    if (resolver === youtubeShortsResolver) {
+      presenceData.largeImageKey = YouTubeAssets.Shorts
+      presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play
+      presenceData.smallImageText = video.paused ? strings.pause : strings.play
+    }
 
-		//* Remove timestamps if paused or live
-		if (video.paused || live) {
-			delete presenceData.startTimestamp;
-			delete presenceData.endTimestamp;
+    if (!presenceData.details)
+      presence.setActivity()
+    else presence.setActivity(presenceData)
+  }
+  else if (
+    hostname === 'www.youtube.com'
+    || hostname === 'youtube.com'
+    || hostname === 'm.youtube.com'
+  ) {
+    const presenceData: PresenceData = {
+      largeImageKey: YouTubeAssets.Logo,
+      startTimestamp: browsingTimestamp,
+      type: ActivityType.Watching,
+    }
+    let searching = false
 
-			if (live) {
-				presenceData.smallImageKey = "live";
-				presenceData.smallImageText = strings.live;
-			}
-		}
+    switch (true) {
+      case pathname === '/': {
+        const child = document.querySelector(
+          '[class="style-scope ytd-feed-filter-chip-bar-renderer iron-selected"]',
+        ) ?? null // Select selected child
+        if (
+          child?.parentElement
+          && Array.prototype.indexOf.call(child.parentElement.children, child) > 0
+        ) {
+          // Get index of child element from parent
+          // if the current child index is bigger than 0 continue
+          presenceData.details = strings.browsingTypeVideos.replace(
+            '{0}',
+            child?.textContent?.trim().toLowerCase() ?? '',
+          )
+        }
+        else if (hideHome) {
+          return presence.clearActivity()
+        }
+        else {
+          presenceData.details = strings.viewHome
+        }
+        break
+      }
+      case pathname.includes('/results'): {
+        searching = true
 
-		//* Update title to indicate when an ad is being played
-		if (document.querySelector(".ytp-ad-player-overlay")) {
-			presenceData.details = strings.ad;
-			delete presenceData.state;
-		} else if (privacy) {
-			if (live) presenceData.details = strings.watchLive;
-			else presenceData.details = strings.watchVid;
+        presenceData.details = strings.search
+        presenceData.state = document.querySelector<HTMLInputElement>(
+          selectors.searchInput,
+        )?.value
+        presenceData.smallImageKey = Assets.Search
+        break
+      }
+      case pathname.includes('/@'):
+      case pathname.includes('/channel'):
+      case pathname.includes('/c'):
+      case pathname.includes('/user'): {
+        const documentTitle = document.title.substring(
+          0,
+          document.title.lastIndexOf(' - YouTube'),
+        )
 
-			delete presenceData.state;
-			presenceData.largeImageKey = "yt_lg";
-			presenceData.startTimestamp = Math.floor(Date.now() / 1000);
-			delete presenceData.endTimestamp;
-		} else if (buttons) {
-			if (!unlistedVideo) {
-				presenceData.buttons = [
-					{
-						label: live ? strings.watchStreamButton : strings.watchVideoButton,
-						url: document.URL.includes("/watch?v=")
-							? document.URL.split("&")[0]
-							: `https://www.youtube.com/watch?v=${videoId}`
-					},
-					{
-						label: strings.viewChannelButton,
-						url: (
-							document.querySelector(
-								"#top-row > ytd-video-owner-renderer > a"
-							) as HTMLLinkElement
-						).href
-					}
-				];
-			}
-		}
-		if (!time) {
-			delete presenceData.startTimestamp;
-			delete presenceData.endTimestamp;
-		}
+        let user: string | undefined | null
+        // Get channel name when viewing a community post
+        if (
+          documentTitle.includes(
+            document.querySelector(selectors.userName)?.textContent?.trim() ?? '',
+          )
+        ) {
+          user = document.querySelector(selectors.userName)?.textContent
+        }
+        // Get channel name when viewing a channel
+        else if (
+          documentTitle.includes(
+            document.querySelector(selectors.userName2)?.textContent ?? '',
+          )
+          && document.querySelector(selectors.userName2)?.textContent
+        ) {
+          user = document.querySelector(selectors.userName2)?.textContent
+        }
+        // Get channel name from website's title
+        else if (/\([^)]+\)/.test(documentTitle)) {
+          user = documentTitle.replace(/\(([^)]+)\)/, '')
+        }
+        else {
+          user = documentTitle
+        }
 
-		if (!presenceData.details) presence.setActivity();
-		else presence.setActivity(presenceData);
-	} else if (
-		document.location.hostname === "www.youtube.com" ||
-		document.location.hostname === "youtube.com"
-	) {
-		const presenceData: PresenceData = {
-				largeImageKey: "yt_lg"
-			},
-			browsingStamp = Math.floor(Date.now() / 1000);
-		let searching = false;
+        if (
+          !user
+          || user.replace(/\s+/g, '') === ''
+          || user.replace(/\s+/g, '') === '\u200C'
+        ) {
+          user = 'null'
+        }
 
-		if (document.location.pathname.includes("/results")) {
-			searching = true;
-			let search: HTMLInputElement;
-			//When searching something
-			search = document.querySelector(
-				"#search-input > div > div:nth-child(2) > input"
-			);
-			if (!search) search = document.querySelector("#search-input > input");
+        if (pathname.includes('/videos')) {
+          presenceData.details = `${strings.browsingThrough} ${document
+            .querySelector(selectors.userVideoTab)
+            ?.textContent
+            ?.trim()} ${document
+            .querySelector(selectors.userTab)
+            ?.textContent
+            ?.trim()
+            .toLowerCase()}`
+          presenceData.state = `${strings.ofChannel} ${user}`
+        }
+        else if (pathname.includes('/shorts')) {
+          presenceData.details = strings.browseShorts
+          presenceData.state = `${strings.ofChannel} ${user}`
+        }
+        else if (pathname.includes('/playlists')) {
+          presenceData.details = strings.browsingPlayl
+          presenceData.state = `${strings.ofChannel} ${user}`
+        }
+        else if (pathname.includes('/community')) {
+          presenceData.details = strings.viewCPost
+          presenceData.state = `${strings.ofChannel} ${user}`
+          presenceData.largeImageKey = logo === LogoMode.Thumbnail
+            ? document.querySelector<HTMLImageElement>(
+              selectors.postThumbnail,
+            )?.src
+            : logo === LogoMode.Channel
+              ? document.querySelector<HTMLImageElement>(
+                selectors.postChannelImage,
+              )?.src
+              : YouTubeAssets.Logo
+        }
+        else if (pathname.includes('/about')) {
+          presenceData.details = strings.readChannel
+          presenceData.state = user
+          presenceData.smallImageKey = Assets.Reading
+        }
+        else if (pathname.includes('/search')) {
+          searching = true
 
-			presenceData.details = strings.search;
-			presenceData.state = search.value;
-			presenceData.smallImageKey = "search";
-			presenceData.startTimestamp = browsingStamp;
-		} else if (
-			document.location.pathname.includes("/channel") ||
-			document.location.pathname.includes("/c") ||
-			document.location.pathname.includes("/user")
-		) {
-			//Sometimes causes problems
-			let user: string;
-			//get channel name when viewing a community post
-			if (
-				document.querySelector("#author-text.ytd-backstage-post-renderer") &&
-				document.title
-					.substr(0, document.title.lastIndexOf(" - YouTube"))
-					.includes(
-						document
-							.querySelector("#author-text.ytd-backstage-post-renderer")
-							.textContent.trim()
-					)
-			) {
-				user = document.querySelector(
-					"#author-text.ytd-backstage-post-renderer"
-				).textContent;
-				//get channel name when viewing a channel
-			} else if (
-				document.querySelector("#text.ytd-channel-name") &&
-				document.title
-					.substr(0, document.title.lastIndexOf(" - YouTube"))
-					.includes(
-						document.querySelector("#text.ytd-channel-name").textContent
-					)
-			)
-				user = document.querySelector("#text.ytd-channel-name").textContent;
-			//get channel name from website's title
-			else if (
-				/\(([^)]+)\)/.test(
-					document.title.substr(0, document.title.lastIndexOf(" - YouTube"))
-				)
-			) {
-				user = document.title
-					.substr(0, document.title.lastIndexOf(" - YouTube"))
-					.replace(/\(([^)]+)\)/, "");
-			} else {
-				user = document.title.substr(
-					0,
-					document.title.lastIndexOf(" - YouTube")
-				);
-			}
+          presenceData.details = strings.searchChannel.replace('{0}', user)
+          presenceData.state = new URLSearchParams(search).get('query')
+          presenceData.smallImageKey = Assets.Search
+        }
+        else {
+          presenceData.details = strings.viewChannel
+          presenceData.state = user
+        }
+        if (channelPic) {
+          const channelImg = (
+            // Self channel
+            document.querySelector<HTMLImageElement>(
+              'yt-img-shadow.ytd-channel-avatar-editor > img',
+            )
+            ?? document.querySelector<HTMLImageElement>(
+              '#avatar.ytd-c4-tabbed-header-renderer > img',
+            )
+            // When viewing a community post
+            ?? document.querySelector<HTMLImageElement>(
+              selectors.postChannelImage,
+            )
+            // When viewing a channel on the normal channel page
+            ?? document.querySelector<HTMLImageElement>(selectors.channelImage)
+          )?.src.replace(/=s\d+/, '=s512') ?? YouTubeAssets.Logo
+          if (channelImg)
+            presenceData.largeImageKey = channelImg
+        }
+        break
+      }
+      case pathname.includes('/post'): {
+        presenceData.details = strings.viewCPost
+        const selector = document.querySelector(selectors.postAuthor)
+        if (selector)
+          presenceData.state = `${strings.ofChannel} ${selector.textContent}`
+        break
+      }
+      case pathname.includes('/feed/trending'): {
+        presenceData.details = strings.trending
+        break
+      }
+      case pathname.includes('/feed/subscriptions'): {
+        presenceData.details = strings.browsingThrough
+        presenceData.state = strings.subscriptions
+        break
+      }
+      case pathname.includes('/feed/library'): {
+        presenceData.details = strings.browsingThrough
+        presenceData.state = strings.library
+        break
+      }
+      case pathname.includes('/feed/history'): {
+        presenceData.details = strings.browsingThrough
+        presenceData.state = strings.history
+        break
+      }
+      case pathname.includes('/feed/purchases'): {
+        presenceData.details = strings.browsingThrough
+        presenceData.state = strings.purchases
+        break
+      }
+      case pathname.includes('/playlist'): {
+        presenceData.details = strings.viewPlaylist
+        presenceData.state = document
+          .querySelector(selectors.playlistTitle)
+          ?.textContent
+          ?.trim()
+        break
+      }
+      case pathname.includes('/premium'): {
+        presenceData.details = strings.readAbout
+        presenceData.state = 'Youtube Premium'
+        presenceData.smallImageKey = Assets.Reading
+        break
+      }
+      case pathname.includes('/gaming'): {
+        presenceData.details = strings.browsingThrough
+        presenceData.state = 'Youtube Gaming'
+        presenceData.smallImageKey = Assets.Reading
+        break
+      }
+      case pathname.includes('/account'): {
+        presenceData.details = strings.viewAccount
+        break
+      }
+      case pathname.includes('/reporthistory'): {
+        presenceData.details = strings.reports
+        break
+      }
+      case pathname.includes('/intl'): {
+        presenceData.details = strings.readAbout
+        presenceData.state = document.title.substring(
+          0,
+          document.title.lastIndexOf(' - YouTube'),
+        )
+        presenceData.smallImageKey = Assets.Reading
+        break
+      }
+      case pathname.includes('/upload'): {
+        presenceData.details = strings.upload
+        presenceData.smallImageKey = Assets.Writing
+        break
+      }
+      case pathname.includes('/view_all_playlists'): {
+        presenceData.details = strings.viewAllPlayL
+        break
+      }
+      case pathname.includes('/my_live_events'): {
+        presenceData.details = strings.viewEvent
+        break
+      }
+      case pathname.includes('/live_dashboard'): {
+        presenceData.details = strings.viewLiveDash
+        break
+      }
+      case pathname.includes('/audiolibrary'): {
+        presenceData.details = strings.viewAudio
+        break
+      }
+    }
 
-			// don't remove the second, includes an invisible character
-			if (user.replace(/\s+/g, "") === "" || user.replace(/\s+/g, "") === "‌")
-				user = "null";
+    if (privacy) {
+      if (searching) {
+        presenceData.details = strings.searchSomething
+        delete presenceData.state
+      }
+      else {
+        presenceData.details = strings.browsing
+        delete presenceData.state
+        delete presenceData.smallImageKey
+      }
+    }
 
-			if (document.location.pathname.includes("/videos")) {
-				presenceData.details = strings.browsingThrough;
-				presenceData.state = `${strings.ofChannel} ${user}`;
-				presenceData.startTimestamp = browsingStamp;
-			} else if (document.location.pathname.includes("/playlists")) {
-				presenceData.details = strings.browsingPlayl;
-				presenceData.state = `${strings.ofChannel} ${user}`;
-				presenceData.startTimestamp = browsingStamp;
-			} else if (document.location.pathname.includes("/community")) {
-				presenceData.details = strings.viewCPost;
-				presenceData.state = `${strings.ofChannel} ${user}`;
-				presenceData.startTimestamp = browsingStamp;
-			} else if (document.location.pathname.includes("/about")) {
-				presenceData.details = strings.readChannel;
-				presenceData.state = user;
-				presenceData.smallImageKey = "reading";
-				presenceData.startTimestamp = browsingStamp;
-			} else if (document.location.pathname.includes("/search")) {
-				searching = true;
-				const [, search] = document.URL.split("search?query=");
-				presenceData.details = strings.searchChannel.replace("{0}", user);
-				presenceData.state = search;
-				presenceData.smallImageKey = "search";
-				presenceData.startTimestamp = browsingStamp;
-			} else {
-				presenceData.details = strings.viewChannel;
-				presenceData.state = user;
-				presenceData.startTimestamp = browsingStamp;
-			}
-			if (channelPic) {
-				const channelImg =
-					document //self channel
-						.querySelector<HTMLImageElement>(
-							"yt-img-shadow.ytd-channel-avatar-editor > img"
-						)
-						?.src.replace("=s176", "=s512") ??
-					document
-						.querySelector<HTMLImageElement>(
-							"#avatar.ytd-c4-tabbed-header-renderer > img"
-						)
-						?.src.replace("=s176", "=s512") ??
-					document //when viewing a community post
-						.querySelector<HTMLImageElement>(
-							"#author-thumbnail > a > yt-img-shadow > img"
-						)
-						?.src.replace("=s76", "=s512") ??
-					"yt_lg";
-				if (channelImg) presenceData.largeImageKey = channelImg;
-			}
-		} else if (document.location.pathname.includes("/post")) {
-			presenceData.details = strings.viewCPost;
-			const selector: Node = document.querySelector("#author-text");
-			presenceData.state =
-				(selector && `${strings.ofChannel} ${selector.textContent}`) || null;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/feed/trending")) {
-			presenceData.details = strings.trending;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/feed/subscriptions")) {
-			presenceData.details = strings.browsingThrough;
-			presenceData.state = strings.subscriptions;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/feed/library")) {
-			presenceData.details = strings.browsingThrough;
-			presenceData.state = strings.library;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/feed/history")) {
-			presenceData.details = strings.browsingThrough;
-			presenceData.state = strings.history;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/feed/purchases")) {
-			presenceData.details = strings.browsingThrough;
-			presenceData.state = strings.purchases;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/playlist")) {
-			presenceData.details = strings.viewPlaylist;
+    if (!time) {
+      delete presenceData.startTimestamp
+      delete presenceData.endTimestamp
+    }
 
-			let title: HTMLElement | null = document.querySelector("#text-displayed");
-			if (!title)
-				title = document.querySelector("#title > yt-formatted-string > a");
+    if (!presenceData.details)
+      presence.setActivity()
+    else presence.setActivity(presenceData, true)
+  }
+  else if (hostname === 'studio.youtube.com') {
+    const presenceData: PresenceData = {
+      largeImageKey: YouTubeAssets.Logo,
+      smallImageKey: YouTubeAssets.Studio,
+      smallImageText: 'Youtube Studio',
+      startTimestamp: browsingTimestamp,
+    }
 
-			presenceData.state = title.textContent;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/premium")) {
-			presenceData.details = strings.readAbout;
-			presenceData.state = "Youtube Premium";
-			presenceData.smallImageKey = "reading";
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/gaming")) {
-			presenceData.details = strings.browsingThrough;
-			presenceData.state = "Youtube Gaming";
-			presenceData.smallImageKey = "reading";
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/account")) {
-			presenceData.details = strings.viewAccount;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/reporthistory")) {
-			presenceData.details = strings.reports;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/intl")) {
-			presenceData.details = strings.readAbout;
-			presenceData.state = document.title.substr(
-				0,
-				document.title.lastIndexOf(" - YouTube")
-			);
-			presenceData.smallImageKey = "reading";
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.URL === "https://www.youtube.com/") {
-			presenceData.details = strings.viewHome;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/upload")) {
-			presenceData.details = strings.upload;
-			presenceData.startTimestamp = browsingStamp;
-			presenceData.smallImageKey = "writing";
-		} else if (document.location.pathname.includes("/view_all_playlists")) {
-			presenceData.details = strings.viewAllPlayL;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/my_live_events")) {
-			presenceData.details = strings.viewEvent;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/live_dashboard")) {
-			presenceData.details = strings.viewLiveDash;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/audiolibrary")) {
-			presenceData.details = strings.viewAudio;
-			presenceData.startTimestamp = browsingStamp;
-		}
+    switch (true) {
+      case pathname.includes('/videos'): {
+        presenceData.details = strings.studioVid
+        break
+      }
+      case pathname.includes('/video'): {
+        const title = document.querySelector('#entity-name')
+        if (pathname.includes('/edit')) {
+          presenceData.details = strings.studioEdit
+          presenceData.state = title?.textContent
+        }
+        else if (pathname.includes('/analytics')) {
+          presenceData.details = strings.studioAnaly
+          presenceData.state = title?.textContent
+        }
+        else if (pathname.includes('/comments')) {
+          presenceData.details = strings.studioComments
+          presenceData.state = title?.textContent
+        }
+        else if (pathname.includes('/translations')) {
+          presenceData.details = strings.studioTranslate
+          presenceData.state = title?.textContent
+        }
+        break
+      }
+      case pathname.includes('/analytics'): {
+        presenceData.details = strings.studioTheir
+        presenceData.state = strings.studioCAnaly
+        break
+      }
+      case pathname.includes('/comments'): {
+        presenceData.details = strings.studioTheir
+        presenceData.state = strings.studioCComments
+        break
+      }
+      case pathname.includes('/translations'): {
+        presenceData.details = strings.studioTheir
+        presenceData.state = strings.studioCTranslate
+        break
+      }
+      case pathname.includes('/channel'): {
+        presenceData.details = strings.studioDash
+        break
+      }
+      case pathname.includes('/artist'): {
+        presenceData.details = strings.studioTheir
+        presenceData.state = strings.studioArtist
+        break
+      }
+    }
 
-		if (privacy) {
-			if (searching) {
-				presenceData.details = strings.searchSomething;
-				delete presenceData.state;
-			} else {
-				presenceData.details = strings.browsing;
-				delete presenceData.state;
-				delete presenceData.smallImageKey;
-			}
-		}
+    if (privacy) {
+      presenceData.details = strings.browsing
+      delete presenceData.state
+      delete presenceData.smallImageKey
+    }
 
-		if (!time) {
-			delete presenceData.startTimestamp;
-			delete presenceData.endTimestamp;
-		}
+    if (!time) {
+      delete presenceData.startTimestamp
+      delete presenceData.endTimestamp
+    }
 
-		if (!presenceData.details) presence.setActivity();
-		else presence.setActivity(presenceData);
-	} else if (document.location.hostname === "studio.youtube.com") {
-		const presenceData: PresenceData = {
-				largeImageKey: "yt_lg",
-				smallImageKey: "studio",
-				smallImageText: "Youtube Studio"
-			},
-			browsingStamp = Math.floor(Date.now() / 1000);
-
-		if (document.location.pathname.includes("/videos")) {
-			presenceData.details = strings.studioVid;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/video")) {
-			const title: HTMLElement = document.querySelector("#entity-name");
-			presenceData.startTimestamp = browsingStamp;
-			if (document.location.pathname.includes("/edit")) {
-				presenceData.details = strings.studioEdit;
-				presenceData.state = title.textContent;
-			} else if (document.location.pathname.includes("/analytics")) {
-				presenceData.details = strings.studioAnaly;
-				presenceData.state = title.textContent;
-			} else if (document.location.pathname.includes("/comments")) {
-				presenceData.details = strings.studioComments;
-				presenceData.state = title.textContent;
-			} else if (document.location.pathname.includes("/translations")) {
-				presenceData.details = strings.studioTranslate;
-				presenceData.state = title.textContent;
-			}
-		} else if (document.location.pathname.includes("/analytics")) {
-			presenceData.details = strings.studioTheir;
-			presenceData.state = strings.studioCAnaly;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/comments")) {
-			presenceData.details = strings.studioTheir;
-			presenceData.state = strings.studioCComments;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/translations")) {
-			presenceData.details = strings.studioTheir;
-			presenceData.state = strings.studioCTranslate;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/channel")) {
-			presenceData.details = strings.studioDash;
-			presenceData.startTimestamp = browsingStamp;
-		} else if (document.location.pathname.includes("/artist")) {
-			presenceData.details = strings.studioTheir;
-			presenceData.state = strings.studioArtist;
-			presenceData.startTimestamp = browsingStamp;
-		}
-
-		if (privacy) {
-			presenceData.details = strings.browsing;
-			delete presenceData.state;
-			delete presenceData.smallImageKey;
-		}
-
-		if (!time) {
-			delete presenceData.startTimestamp;
-			delete presenceData.endTimestamp;
-		}
-
-		if (!presenceData.details) presence.setActivity();
-		else presence.setActivity(presenceData);
-	}
-});
+    if (!presenceData.details)
+      presence.setActivity()
+    else presence.setActivity(presenceData)
+  }
+})

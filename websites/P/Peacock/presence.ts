@@ -1,80 +1,93 @@
+import { Assets } from 'premid'
+
 const presence = new Presence({
-		clientId: "767402228825980929"
-	}),
-	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		live: "presence.activity.live",
-		search: "presence.activity.searching"
-	});
+  clientId: '767402228825980929',
+})
+const newStrings = presence.getStrings({
+  play: 'general.playing',
+  pause: 'general.paused',
+  live: 'general.live',
+})
+const elapsed = Math.floor(Date.now() / 1000)
 
-let elapsed: number, oldUrl: string;
+let strings: Awaited<typeof newStrings>
 
-presence.on("UpdateData", async () => {
-	let video: HTMLVideoElement = null,
-		// eslint-disable-next-line no-one-time-vars/no-one-time-vars
-		details,
-		state,
-		smallImageKey,
-		smallImageText,
-		startTimestamp,
-		endTimestamp;
+presence.on('UpdateData', async () => {
+  let extra = '...'
 
-	const { href } = window.location,
-		path = window.location.pathname,
-		presenceData: PresenceData = {
-			largeImageKey: "peacock",
-			details
-		};
+  const path = window.location.pathname
+  const presenceData: PresenceData = {
+    largeImageKey: 'https://cdn.rcd.gg/PreMiD/websites/P/Peacock/assets/logo.png',
+    startTimestamp: elapsed,
+  }
 
-	if (href !== oldUrl) {
-		oldUrl = href;
-		elapsed = Math.floor(Date.now() / 1000);
-	}
+  strings ??= await newStrings
 
-	presenceData.startTimestamp = elapsed;
+  if (path.includes('/movies/highlights'))
+    extra = ' Movies'
+  else if (path.includes('/watch/tv/highlights'))
+    extra = ' TV Shows'
+  else if (path.includes('/watch/kids/highlights'))
+    extra = ' Kids'
+  else if (path.includes('/watch/sports/highlights'))
+    extra = ' Sports'
+  else if (path.includes('/watch/latino/highlights'))
+    extra = ' Latino'
 
-	if (path.includes("/watch/playback") || path.includes("/watch/asset")) {
-		video = document.querySelector(".video-player-component video");
-		if (video) {
-			const [startTimestamp, endTimestamp] = presence.getTimestamps(
-					Math.floor(video.currentTime),
-					Math.floor(video.duration)
-				),
-				live = endTimestamp === Infinity,
-				desc =
-					document.querySelector(
-						".playback-metadata__container-episode-metadata-info"
-					) ||
-					document.querySelector(".playback-metadata__container-description") ||
-					document.querySelector(
-						".swiper-slide-active .playlist-item-overlay__container-title"
-					);
+  presenceData.details = `Browsing${extra}`
 
-			if (desc) state = desc.textContent;
+  if (path.includes('/watch/search'))
+    presenceData.details = 'Searching...'
 
-			smallImageKey = live ? "live" : video.paused ? "pause" : "play";
-			smallImageText = live
-				? (await strings).live
-				: video.paused
-				? (await strings).pause
-				: (await strings).play;
-			presenceData.startTimestamp = live ? elapsed : startTimestamp;
-			presenceData.endTimestamp = endTimestamp;
+  if (path.includes('/watch/playback') || path.includes('/watch/asset')) {
+    const video = document.querySelector<HTMLVideoElement>(
+      '.video-player-component video',
+    )
+    if (video) {
+      const title = document.querySelector('.playback-header__title')
+        || document.querySelector('.playback-metadata__container-title')
+      const timestamps = presence.getTimestamps(
+        Math.floor(video.currentTime),
+        Math.floor(video.duration),
+      )
+      const live = timestamps[1] === Infinity
+      const desc = document.querySelector(
+        '.playback-metadata__container-episode-metadata-info',
+      )
+      || document.querySelector('.playback-metadata__container-description')
+      || document.querySelector(
+        '.swiper-slide-active .playlist-item-overlay__container-title',
+      )
 
-			if (live) delete presenceData.endTimestamp;
-			if (video.paused) {
-				delete presenceData.startTimestamp;
-				delete presenceData.endTimestamp;
-			}
-		}
-	}
+      if (desc)
+        presenceData.state = desc.textContent
 
-	presenceData.state = state;
-	presenceData.smallImageKey = smallImageKey;
-	presenceData.smallImageText = smallImageText;
-	presenceData.startTimestamp = startTimestamp;
-	presenceData.endTimestamp = endTimestamp;
+      if (title) {
+        presenceData.details = title.textContent
+        if (path.includes('/watch/playback/playlist'))
+          presenceData.details += ' Playlist'
+      }
 
-	presence.setActivity(presenceData, video ? !video.paused : true);
-});
+      presenceData.smallImageKey = live
+        ? Assets.Live
+        : video.paused
+          ? Assets.Pause
+          : Assets.Play
+      presenceData.smallImageText = live
+        ? strings.live
+        : video.paused
+          ? strings.pause
+          : strings.play
+
+      if (!live)
+        [presenceData.startTimestamp, presenceData.endTimestamp] = timestamps
+
+      if (video.paused) {
+        delete presenceData.startTimestamp
+        delete presenceData.endTimestamp
+      }
+    }
+  }
+
+  presence.setActivity(presenceData)
+})

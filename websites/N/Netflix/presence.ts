@@ -1,517 +1,236 @@
-interface Episode {
-	seq: number;
-	title: string;
-	episodeId: number;
-}
+import type { ShowVideo } from './types.js'
+import { ActivityType, Assets } from 'premid'
+import {
+  clearMetadata,
+  fetchMetadata,
+  metadata,
+} from './functions/fetchMetadata.js'
 
-interface Season {
-	seq: number;
-	episodes: Episode[];
-}
-
-interface VideoMetadata {
-	type: "movie" | "show";
-	boxart: string;
-	id: number;
-	currentEpisode: number;
-	seasons: Season[];
-	title: string;
-}
-
-interface DiscoveryModel {
-	type: "movie" | "show";
-	title: string;
-	imageHighRes: string;
+enum ActivityAssets {
+  Logo = 'https://cdn.rcd.gg/PreMiD/websites/N/Netflix/assets/1.png',
+  Noback = 'https://cdn.rcd.gg/PreMiD/websites/N/Netflix/assets/2.png',
+  Animated = 'https://cdn.rcd.gg/PreMiD/websites/N/Netflix/assets/0.gif',
 }
 
 const presence = new Presence({
-		clientId: "926541425682829352"
-	}),
-	getStrings = async () => {
-		return presence.getStrings(
-			{
-				play: "general.playing",
-				pause: "general.paused",
-				browse: "general.browsing",
-				viewingMovie: "general.viewMovie",
-				viewingSeries: "general.viewSeries",
-				account: "general.viewAccount",
-				watchingMovie: "general.watchingMovie",
-				watchingSeries: "general.watchingSeries",
-				searchFor: "general.searchFor",
-				searchSomething: "general.searchSomething",
-				genre: "general.viewGenre",
-				viewSeries: "general.buttonViewSeries",
-				viewMovies: "general.buttonViewMovie",
-				watchEpisode: "general.buttonViewEpisode",
-				watchMovie: "general.buttonWatchMovie",
-				viewList: "netflix.viewList",
-				profile: "netflix.profile",
-				latest: "netflix.latest",
-				refer: "netflix.referral"
-			},
-			await presence.getSetting<string>("lang").catch(() => "en")
-		);
-	},
-	script = document.createElement("script"),
-	eventName = "PreMiD_Netflix";
+  clientId: '926541425682829352',
+})
+async function getStrings() {
+  return presence.getStrings(
+    {
+      play: 'general.playing',
+      pause: 'general.paused',
+      browse: 'general.browsing',
+      watchingMovie: 'general.watchingMovie',
+      watchingSeries: 'general.watchingSeries',
+      viewSeries: 'general.buttonViewSeries',
+      viewMovies: 'general.buttonViewMovie',
+      watchEpisode: 'general.buttonViewEpisode',
+      watchMovie: 'general.buttonWatchMovie',
+      seriesDisplayFull: 'netflix.seriesDisplay.full',
+      seriesDisplayShort: 'netflix.seriesDisplay.short',
+      movieDisplay: 'netflix.movieDisplay',
+    },
+    await presence.getSetting<string>('lang').catch(() => 'en'),
+  )
+}
+let oldLang: string | null = null
+let strings: Awaited<ReturnType<typeof getStrings>>
 
-let latestData: {
-		videoMetadata: Record<string, VideoMetadata>;
-		discoveryModels: Record<string, DiscoveryModel>;
-	} = null,
-	browsingTimestamp = Math.floor(Date.now() / 1000),
-	prevUrl = document.location.href,
-	strings: Awaited<ReturnType<typeof getStrings>> = null,
-	oldLang: string = null;
+presence.on('UpdateData', async () => {
+  const [
+    lang,
+    usePresenceName,
+    showTimestamp,
+    showBrowsingStatus,
+    showCover,
+    showSeries,
+    showMovies,
+    showSmallImages,
+    logoType,
+    privacyMode,
+  ] = await Promise.all([
+    presence.getSetting<string>('lang').catch(() => 'en'),
+    presence.getSetting<boolean>('usePresenceName'),
+    presence.getSetting<boolean>('timestamp'),
+    presence.getSetting<boolean>('showBrowsingStatus'),
+    presence.getSetting<boolean>('showCover'),
+    presence.getSetting<boolean>('showSeries'),
+    presence.getSetting<boolean>('showMovies'),
+    presence.getSetting<boolean>('showSmallImages'),
+    presence.getSetting<number>('logoType'),
+    presence.getSetting<boolean>('privacy'),
+  ])
 
-//#region Variable Trickery
-script.id = eventName;
-script.appendChild(
-	document.createTextNode(`
-    let isRunning = false;
+  if (oldLang !== lang) {
+    oldLang = lang
+    strings = await getStrings()
+  }
 
-    setInterval(() => {
-      if (isRunning) return;
-      isRunning = true;
+  const path = document.location.href
+  //* Match /title/id and get id (When you load the page / reload while browsing)
+  const browsingMediaId = path.match(/\/title\/(\d+)/)
+  //* /browse?jbv=id when normally browsing and clicking on smth
+    ?? path.match(/jbv=(\d+)/)
 
-      let videoMetadata = {};
-      for (const [k, v] of Object.entries(netflix.appContext.state.playerApp.getState().videoPlayer.videoMetadata)) {
-        const i = v._metadata.video;
-          videoMetadata[k] = {
-            id: i.id,
-            type: i.type,
-            title: i.title,
-            boxart: i.boxart[0].url,
-            currentEpisode: i.currentEpisode,
-            seasons: i.seasons?.map(s => {
-              return {
-                seq: s.seq,
-                episodes: s.episodes.map(e => {
-                  return {
-                    seq: e.seq,
-                    title: e.title,
-                    episodeId: e.episodeId
-                  }
-                })
-              }
-            })
-          }
+  if (browsingMediaId) {
+    if (privacyMode)
+      return presence.clearActivity()
+
+    await fetchMetadata(browsingMediaId[1]!)
+
+    return await presence.setActivity({
+      details: metadata?.data?.video.title,
+      state: metadata?.data?.video.synopsis.slice(0, 128),
+      largeImageKey: !showCover
+        ? [ActivityAssets.Animated, ActivityAssets.Logo, ActivityAssets.Noback][logoType]
+        || ActivityAssets.Logo
+        : metadata?.data?.video.boxart.at(0)?.url,
+      ...(showSmallImages && {
+        smallImageKey: Assets.Reading,
+      }),
+      smallImageText: strings.browse,
+      buttons: [
+        {
+          label: metadata?.data?.video.type === 'show'
+            ? strings.viewSeries
+            : strings.viewMovies,
+          url: document.location.href,
+        },
+      ],
+    })
+  }
+
+  //* Match /watch/id and get id
+  const watchingMediaId = path.match(/\/watch\/(\d+)/)
+  if (watchingMediaId) {
+    await fetchMetadata(watchingMediaId[1]!)
+    const video = document.querySelector('video')
+
+    if (!video)
+      return
+
+    const { paused } = video
+    const [startTimestamp, endTimestamp] = presence.getTimestampsfromMedia(video)
+
+    if (metadata?.data?.video.type === 'show' && showSeries) {
+      if (privacyMode) {
+        return await presence.setActivity({
+          type: ActivityType.Watching,
+          details: strings.watchingSeries,
+          largeImageKey: ActivityAssets.Logo,
+        })
       }
 
-    let discoveryModels = {};
-    for (const [k, v] of Object.entries(netflix.appContext.state.discoveryApp.getState().discovery.previewModal.previewModalStateById)) {
-      const i = v.videoModel;
-      if (i) {
-        discoveryModels[k] = {
-          type: i.summary.type,
-          title: i.title,
-          imageHighRes: i.imageHighRes
-        }
-      }
+      //* Typescript type breaks overwise
+      const videoData = metadata.data.video as ShowVideo
+      const season = metadata.data.video.seasons.find(s =>
+        s.episodes.map(e => e.episodeId).includes(videoData.currentEpisode),
+      )
+      const episode = season?.episodes.find(
+        e => e.episodeId === videoData.currentEpisode,
+      )
+
+      return await presence.setActivity({
+        type: ActivityType.Watching,
+        details: metadata.data.video.title,
+        state: strings.seriesDisplayShort
+          .replace('{0}', season?.seq.toString() ?? '')
+          .replace('{1}', episode?.seq.toString() ?? '')
+          .replace('{2}', episode?.title ?? ''),
+        largeImageKey: !showCover
+          ? [ActivityAssets.Animated, ActivityAssets.Logo, ActivityAssets.Noback][
+              logoType
+            ] || ActivityAssets.Logo
+          : metadata?.data?.video.boxart.at(0)?.url,
+        largeImageText: `Season ${season?.seq.toString()}, Episode ${episode?.seq.toString()}`,
+        ...(showSmallImages
+          && paused && {
+          smallImageKey: Assets.Pause,
+          smallImageText: strings.pause,
+        }),
+        ...(showTimestamp
+          && !paused && {
+          startTimestamp,
+          endTimestamp,
+        }),
+        ...(usePresenceName && {
+          name: metadata.data.video.title,
+          details: episode?.title,
+          state: episode?.synopsis,
+        }),
+        buttons: [
+          {
+            label: strings.watchEpisode,
+            url: document.location.href.split('?')[0]!,
+          },
+          {
+            label: strings.viewSeries,
+            url: `https://www.netflix.com/title/${metadata.data.video.id}`,
+          },
+        ],
+      })
     }
 
-      var pmdEvent = new CustomEvent("${eventName}", {
-        detail: {
-          videoMetadata,
-          discoveryModels
-        }
-      });
-      window.dispatchEvent(pmdEvent);
+    if (metadata?.data?.video.type === 'movie' && showMovies) {
+      if (privacyMode) {
+        return await presence.setActivity({
+          type: ActivityType.Watching,
+          details: strings.watchingMovie,
+          largeImageKey: ActivityAssets.Logo,
+        })
+      }
 
-      isRunning = false;
-    }, 10);
-  `)
-);
+      return await presence.setActivity({
+        type: ActivityType.Watching,
+        details: metadata.data.video.title,
+        state: strings.movieDisplay
+          .replace('{0}', metadata.data.video.year.toString())
+          .replace(
+            '{1}',
+            Math.floor(metadata.data.video.runtime / 60).toString(),
+          ),
+        largeImageKey: !showCover
+          ? [ActivityAssets.Animated, ActivityAssets.Logo, ActivityAssets.Noback][
+              logoType
+            ] || ActivityAssets.Logo
+          : metadata.data.video.boxart.at(0)?.url,
+        ...(showSmallImages && {
+          smallImageKey: paused ? Assets.Pause : Assets.Play,
+        }),
+        smallImageText: paused ? strings.pause : strings.play,
+        ...(showTimestamp
+          && !paused && {
+          startTimestamp,
+          endTimestamp,
+        }),
+        ...(usePresenceName && {
+          name: metadata.data.video.title,
+        }),
+        buttons: [
+          {
+            label: strings.watchMovie,
+            url: document.location.href.split('?')[0]!,
+          },
+        ],
+      })
+    }
 
-document.head.appendChild(script);
+    //* show Series & Movies disabled, clearactivity, nothing to show?
+    return presence.clearActivity()
+  }
 
-window.addEventListener(eventName, (data: CustomEvent) => {
-	latestData = data.detail;
-});
-//#endregion
+  //* Reset because no data can be fetched
+  clearMetadata()
 
-presence.on("UpdateData", async () => {
-	const [
-			showMovie,
-			movieDetail,
-			movieState,
-			showSeries,
-			seriesDetail,
-			seriesState,
-			showBrowsing,
-			showTimestamp,
-			showButtons,
-			privacy,
-			newLang,
-			logo,
-			cover
-		] = await Promise.all([
-			presence.getSetting<string>("movie"),
-			presence.getSetting<string>("movieDetails"),
-			presence.getSetting<string>("movieStates"),
-			presence.getSetting<boolean>("series"),
-			presence.getSetting<string>("seriesDetails"),
-			presence.getSetting<string>("seriesStates"),
-			presence.getSetting<boolean>("browse"),
-			presence.getSetting<boolean>("timestamp"),
-			presence.getSetting<boolean>("buttons"),
-			presence.getSetting<boolean>("privacy"),
-			presence.getSetting<string>("lang").catch(() => "en"),
-			presence.getSetting<number>("logo"),
-			presence.getSetting<boolean>("cover")
-		]),
-		largeImage =
-			["https://i.imgur.com/Wf8G0mk.gif", "nflix_lg", "noback"][logo] ||
-			"nflix_lg";
-
-	let presenceData: PresenceData = {
-			largeImageKey: largeImage
-		},
-		[videoMetadata] = Object.values(latestData?.videoMetadata || {});
-	//* Reset browsingTimestamp if href has changed.
-
-	if (document.location.href !== prevUrl) {
-		prevUrl = document.location.href;
-		browsingTimestamp = Math.floor(Date.now() / 1000);
-	}
-
-	//* Language changed, reload strings
-	if (oldLang !== newLang || !strings) {
-		oldLang = newLang;
-		strings = await getStrings();
-	}
-
-	if (!videoMetadata && window.location.pathname.includes("/watch/")) {
-		const episodeId = parseInt(
-				(
-					document.querySelector("[class$='title'] .ellipsize-text span") ??
-					document.querySelector("[data-uia$='video-title'] span")
-				)?.textContent
-					.split(":")[1]
-					.trim()
-					.replace(/\D+/g, ""),
-				0
-			),
-			seasonId = parseInt(
-				(
-					document.querySelector("[class$='title'] .ellipsize-text span") ??
-					document.querySelector("[data-uia$='video-title'] span")
-				)?.textContent
-					.split(":")[0]
-					.trim()
-					.replace(/\D+/g, ""),
-				0
-			),
-			watchId = parseInt(document.URL.split("?")[0].replace(/\D+/g, ""), 0),
-			type =
-				document.querySelector("[class$='title'] .ellipsize-text span") ||
-				document.querySelector("[data-uia$='video-title'] span")
-					? "show"
-					: "movie";
-
-		if (!episodeId || !seasonId || !watchId) return;
-
-		videoMetadata = {
-			type,
-			currentEpisode: watchId,
-			id: watchId,
-			boxart: null,
-			seasons: [
-				{
-					seq: seasonId,
-					episodes: [
-						{
-							episodeId: watchId,
-							seq: episodeId,
-							title: (
-								document.querySelector(
-									"[class$='title'] .ellipsize-text span:nth-child(3)"
-								) ??
-								document.querySelector(
-									"[data-uia$='video-title'] span:nth-child(3)"
-								)
-							)?.textContent
-						}
-					]
-				}
-			],
-			title:
-				type === "movie"
-					? (
-							document.querySelector("[class$='title'] h4.ellipsize-text") ??
-							document.querySelector("[data-uia$='video-title']")
-					  )?.textContent
-					: (
-							document.querySelector("[class$='title'] .ellipsize-text h4") ??
-							document.querySelector("[data-uia$='video-title'] h4")
-					  )?.textContent
-		};
-	}
-
-	if (videoMetadata) {
-		const videoElement = document.querySelector("video"),
-			{ currentEpisode, id, seasons, title } = videoMetadata;
-
-		if (!videoElement) return;
-
-		//* User is currently playing a video
-		const { paused } = videoElement;
-
-		if (cover) {
-			presenceData.largeImageKey = videoMetadata.boxart
-				? await getShortURL(videoMetadata.boxart)
-				: largeImage;
-		}
-
-		[, presenceData.endTimestamp] =
-			presence.getTimestampsfromMedia(videoElement);
-		if (paused) delete presenceData.endTimestamp;
-
-		presenceData.smallImageKey = paused ? "pause" : "play";
-		presenceData.smallImageText = strings[paused ? "pause" : "play"];
-
-		switch (videoMetadata.type) {
-			case "movie": {
-				presenceData.details = movieDetail.replace("%title%", title);
-				presenceData.state = movieState.replace("%title%", title);
-
-				if (movieDetail === "{0}") delete presenceData.details;
-				if (movieState === "{0}") delete presenceData.state;
-
-				presenceData.buttons = [
-					{
-						label: strings.watchMovie,
-						url: `https://www.netflix.com/watch/${id}`
-					},
-					{
-						label: strings.viewMovies,
-						url: `https://www.netflix.com/title/${id}`
-					}
-				];
-
-				if (privacy) {
-					presenceData.details = strings.watchingMovie;
-					delete presenceData.state;
-				}
-
-				if (!showButtons || privacy) delete presenceData.buttons;
-
-				if (!showTimestamp) {
-					delete presenceData.startTimestamp;
-					delete presenceData.endTimestamp;
-				}
-
-				if (presenceData.details.length < 3)
-					presenceData.details = ` ${presenceData.details}`;
-
-				if (presenceData.state.length < 3)
-					presenceData.state = ` ${presenceData.state}`;
-
-				if (showMovie) return presence.setActivity(presenceData);
-				else return presence.setActivity();
-			}
-			case "show": {
-				const episodeId = currentEpisode,
-					season = seasons.find(s =>
-						s.episodes.map(e => e.episodeId).includes(episodeId)
-					),
-					episode = season.episodes.find(e => e.episodeId === episodeId);
-
-				presenceData.details = seriesDetail
-					.replace("%title%", title)
-					.replace("%season%", season.seq.toString())
-					.replace("%episode%", episode.seq.toString())
-					.replace("%episodeTitle%", episode.title);
-				presenceData.state = seriesState
-					.replace("%title%", title)
-					.replace("%season%", season.seq.toString())
-					.replace("%episode%", episode.seq.toString())
-					.replace("%episodeTitle%", episode.title);
-
-				if (seriesState === "{0}") delete presenceData.state;
-
-				presenceData.buttons = [
-					{
-						label: strings.watchEpisode,
-						url: `https://www.netflix.com/watch/${currentEpisode}`
-					},
-					{
-						label: strings.viewSeries,
-						url: `https://www.netflix.com/title/${id}`
-					}
-				];
-
-				if (privacy) {
-					presenceData.details = strings.watchingSeries;
-					delete presenceData.state;
-				}
-
-				if (!showButtons || privacy) delete presenceData.buttons;
-
-				if (!showTimestamp) {
-					delete presenceData.startTimestamp;
-					delete presenceData.endTimestamp;
-				}
-
-				if (presenceData.details.length < 3)
-					presenceData.details = ` ${presenceData.details}`;
-
-				if (presenceData.state.length < 3)
-					presenceData.state = ` ${presenceData.state}`;
-
-				if (showSeries) return presence.setActivity(presenceData);
-				else return presence.setActivity();
-			}
-		}
-	}
-
-	//* User is browsing the website
-	const statics: {
-		[name: string]: PresenceData;
-	} = {
-		"/browse": {
-			details: strings.browse
-		},
-		"/browse/genre/(\\d*)/": {
-			...(() => {
-				const genre =
-					document.querySelector(".genreTitle")?.textContent ||
-					document.querySelector(".nm-collections-header-name")?.textContent;
-
-				if (!genre) return {};
-				return {
-					details: strings.genre,
-					state:
-						document.querySelector(".genreTitle")?.textContent ||
-						document.querySelector(".nm-collections-header-name")?.textContent
-				};
-			})()
-		},
-		"/browse/my-list/": {
-			details: strings.viewList
-		},
-		"/title/(\\d*)/": {
-			...(await (async () => {
-				const model = latestData?.discoveryModels[document.URL.split("/")[4]],
-					isSeries = model?.type === "show";
-				if (!model) return {};
-				return {
-					details: isSeries ? strings.viewingSeries : strings.viewingMovie,
-					state: model.title,
-					largeImageKey: cover
-						? model.imageHighRes
-							? await getShortURL(model.imageHighRes)
-							: largeImage
-						: largeImage,
-					buttons: [
-						{
-							label: isSeries ? strings.viewSeries : strings.viewMovies,
-							url: document.URL.split("&")[0]
-						}
-					]
-				};
-			})())
-		},
-		"/latest/": {
-			details: strings.latest.includes("{0}")
-				? strings.latest.split("{0}")[0]
-				: strings.latest,
-			state: strings.latest.split("{0}")[1]
-		},
-		"/search/": {
-			details: strings.searchFor,
-			state: document.querySelector<HTMLInputElement>(".searchInput > input")
-				?.value,
-			smallImageKey: "search"
-		},
-		"jbv/(\\d*)/": {
-			...(await (async () => {
-				const model =
-						latestData?.discoveryModels[
-							document.URL.split("&")[0].split("jbv=")[1]
-						],
-					isSeries = model?.type === "show";
-
-				if (!model) return {};
-
-				return {
-					details: isSeries ? strings.viewingSeries : strings.viewingMovie,
-					state: model.title,
-					largeImageKey: cover
-						? model.imageHighRes
-							? await getShortURL(model.imageHighRes)
-							: largeImage
-						: largeImage,
-					buttons: [
-						{
-							label: isSeries ? strings.viewSeries : strings.viewMovies,
-							url: document.URL.split("&")[0]
-						}
-					]
-				};
-			})())
-		},
-		"/referfriends/": {
-			details: strings.refer.includes("{0}")
-				? strings.refer.split("{0}")[0]
-				: strings.refer,
-			state: strings.refer.split("{0}")[1]
-		},
-		"/profiles/manage/": {
-			details: strings.profile
-		},
-		"/YourAccount/": {
-			details: strings.account
-		}
-	};
-
-	if (showBrowsing) {
-		for (const [k, v] of Object.entries(statics)) {
-			if (
-				location.href
-					.replace(/\/?$/, "/")
-					.replace(`https://${document.location.hostname}`, "")
-					.replace("?", "/")
-					.replace("=", "/")
-					.match(k)
-			) {
-				presenceData.smallImageKey = "reading";
-				presenceData.smallImageText = strings.browse;
-				presenceData = { ...presenceData, ...v };
-			}
-		}
-	}
-
-	if (showTimestamp) presenceData.startTimestamp = browsingTimestamp;
-
-	if (privacy && presenceData.smallImageKey === "search") {
-		presenceData.details = strings.searchSomething;
-		delete presenceData.state;
-	} else if (privacy) {
-		presenceData.details = strings.browse;
-		delete presenceData.state;
-	}
-
-	if (!showButtons || privacy) delete presenceData.buttons;
-
-	if (!presenceData.details) return;
-	else if (!showBrowsing) presence.setActivity();
-	else presence.setActivity(presenceData);
-});
-
-const shortenedURLs: Record<string, string> = {};
-async function getShortURL(url: string) {
-	if (!url || url.length < 256) return url;
-	if (shortenedURLs[url]) return shortenedURLs[url];
-	try {
-		const pdURL = await (
-			await fetch(`https://pd.premid.app/create/${url}`)
-		).text();
-		shortenedURLs[url] = pdURL;
-		return pdURL;
-	} catch (err) {
-		presence.error(err);
-		return url;
-	}
-}
+  if (showBrowsingStatus && !privacyMode) {
+    return await presence.setActivity({
+      details: strings.browse,
+      largeImageKey: [ActivityAssets.Animated, ActivityAssets.Logo, ActivityAssets.Noback][logoType]
+        || ActivityAssets.Logo,
+      smallImageKey: Assets.Reading,
+      smallImageText: strings.browse,
+    })
+  }
+  return presence.clearActivity()
+})

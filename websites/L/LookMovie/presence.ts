@@ -1,55 +1,118 @@
+import { Assets } from 'premid'
+
 const presence = new Presence({
-		clientId: "760588725494218844"
-	}),
-	strings = presence.getStrings({
-		play: "presence.playback.playing",
-		pause: "presence.playback.paused",
-		browsing: "presence.activity.browsing"
-	});
+  clientId: '934789855962083359',
+})
+const browingTimestamp = Math.floor(Date.now() / 1000)
+async function getStrings() {
+  return presence.getStrings(
+    {
+      play: 'general.playing',
+      paused: 'general.paused',
+      browse: 'general.browsing',
+      buttonWatchVideo: 'general.buttonWatchVideo',
+      viewCategory: 'general.viewCategory',
+      search: 'general.searchFor',
+    },
+    await presence.getSetting<string>('lang').catch(() => 'en'),
+  )
+}
 
-presence.on("UpdateData", async () => {
-	const presenceData: PresenceData = {
-			largeImageKey: "lm"
-		},
-		video: HTMLVideoElement = document.querySelector("video");
+enum ActivityAssets {
+  Logo = 'https://cdn.rcd.gg/PreMiD/websites/L/LookMovie/assets/logo.png',
+}
 
-	if (video && !isNaN(video.duration)) {
-		if (document.location.pathname.includes("/shows/view")) {
-			presenceData.details = `${
-				document.querySelector(".watch-heading > h1 > span").previousSibling
-					.textContent
-			}(${document.querySelector(".watch-heading > h1 > span").textContent})`;
-			presenceData.state = `${
-				document.querySelector(".seasons-switcher > span").textContent
-			} ${document.querySelector(".episodes-switcher > span").textContent}`;
-		} else if (document.location.pathname.includes("/movies/view")) {
-			presenceData.details = document.querySelector(
-				".watch-heading > h1 > span"
-			).previousSibling.textContent;
-			presenceData.state = document.querySelector(
-				".watch-heading > h1 > span"
-			).textContent;
-		}
-		presenceData.smallImageKey = video.paused ? "pause" : "play";
-		presenceData.smallImageText = video.paused
-			? (await strings).pause
-			: (await strings).play;
-		[presenceData.startTimestamp, presenceData.endTimestamp] =
-			presence.getTimestamps(
-				Math.floor(video.currentTime),
-				Math.floor(video.duration)
-			);
+let strings: Awaited<ReturnType<typeof getStrings>>
+let oldLang: string | null = null
 
-		if (video.paused) {
-			delete presenceData.startTimestamp;
-			delete presenceData.endTimestamp;
-		}
+presence.on('UpdateData', async () => {
+  const presenceData: PresenceData = {
+    largeImageKey: ActivityAssets.Logo,
+    startTimestamp: browingTimestamp,
+  }
+  const video = document.querySelector<HTMLVideoElement>('video')
+  const search = document.querySelector<HTMLInputElement>('[id="search_input"]')
+  const { pathname, href } = document.location
+  const [newLang, privacy, buttons, covers] = await Promise.all([
+    presence.getSetting<string>('lang').catch(() => 'en'),
+    presence.getSetting<boolean>('privacy'),
+    presence.getSetting<boolean>('buttons'),
+    presence.getSetting<boolean>('covers'),
+  ])
+  if (oldLang !== newLang || !strings) {
+    oldLang = newLang
+    strings = await getStrings()
+  }
 
-		presence.setActivity(presenceData, !video.paused);
-	} else {
-		presenceData.details = (await strings).browsing;
-		presenceData.smallImageKey = "search";
-		presenceData.smallImageText = (await strings).browsing;
-		presence.setActivity(presenceData);
-	}
-});
+  if (privacy) {
+    presenceData.details = strings.browse
+    presence.setActivity(presenceData)
+    return
+  }
+  if (search?.value) {
+    presenceData.details = strings.search
+    presenceData.state = search.value
+    presenceData.smallImageKey = Assets.Search
+  }
+  else if (pathname.includes('/view/')) {
+    presenceData.details = `Viewing ${document
+      .querySelector('[class*="active"]')
+      ?.textContent
+      ?.trim()
+      .slice(0, -1)}`
+    presenceData.state = document
+      .querySelector<HTMLMetaElement>('[property="og:title"]')
+      ?.content
+      .split('-')[0]
+    presenceData.largeImageKey = document
+      .querySelector('[class="movie-img"]')
+      ?.firstElementChild
+      ?.getAttribute('data-background-image') ?? ActivityAssets.Logo
+  }
+  else if (video?.duration) {
+    delete presenceData.startTimestamp
+    presenceData.details = document.querySelector('[class="bd-hd"]')?.textContent
+      ?? document.querySelector<HTMLMetaElement>('meta[property="og:title"]')
+        ?.content
+        ?? document
+          .querySelector('head > title')
+          ?.textContent
+          ?.replace(' | LookMovie', '')
+
+    presenceData.smallImageKey = video.paused ? Assets.Pause : Assets.Play
+    presenceData.smallImageText = video.paused ? strings.paused : strings.play;
+    [presenceData.startTimestamp, presenceData.endTimestamp] = presence.getTimestampsfromMedia(video)
+    presenceData.largeImageKey = document
+      .querySelector('[id="longInfo"]')
+      ?.firstElementChild
+      ?.getAttribute('src')
+      ?? document.querySelector<HTMLMetaElement>('[property="og:image"]')
+        ?.content
+        ?? ActivityAssets.Logo
+    presenceData.buttons = [
+      {
+        label: strings.buttonWatchVideo,
+        url: href,
+      },
+    ]
+
+    if (video.paused)
+      delete presenceData.endTimestamp
+  }
+  else {
+    presenceData.buttons = [
+      {
+        label: 'Browse',
+        url: href,
+      },
+    ]
+    presenceData.details = strings.browse
+  }
+  if (!buttons)
+    delete presenceData.buttons
+  if (!covers)
+    presenceData.largeImageKey = ActivityAssets.Logo
+  if (presenceData.details)
+    presence.setActivity(presenceData)
+  else presence.setActivity()
+})
